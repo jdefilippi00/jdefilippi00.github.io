@@ -236,6 +236,28 @@
       cursor: pointer;
     }
 
+    /* ── UNDO BUTTON ── */
+    #undo-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      border: none; background: none; cursor: pointer;
+      padding: 4px 10px; border-radius: 10px;
+      transition: background 0.15s, opacity 0.15s;
+      position: relative;
+    }
+    #undo-btn:disabled { opacity: 0.25; cursor: default; }
+    #undo-btn:not(:disabled):active { background: rgba(96,165,250,0.12); }
+    #undo-btn .icon { font-size: 20px; }
+    #undo-btn .label { font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.4px; color: #60a5fa; }
+    #undo-btn:disabled .label { color: var(--muted); }
+    #undo-badge {
+      position: absolute; top: 2px; right: 4px;
+      background: #3b82f6; color: white; border-radius: 8px;
+      font-size: 9px; font-weight: 700; padding: 1px 4px; min-width: 14px;
+      text-align: center; display: none;
+    }
+    #undo-btn:not(:disabled) #undo-badge { display: block; }
+
     /* ── TOAST ── */
     #toast {
       position: fixed; top: calc(env(safe-area-inset-top,16px) + 70px);
@@ -254,6 +276,11 @@
 <!-- TOP BAR -->
 <div id="topbar">
   <div class="logo">em<span>AI</span>l Agent</div>
+  <button id="undo-btn" disabled onclick="undoAction()">
+    <div class="icon">↩</div>
+    <div class="label">Undo</div>
+    <div id="undo-badge">0</div>
+  </button>
   <div class="stats">
     <div class="stat keep"><div class="n" id="s-keep">0</div><div class="l">Keep</div></div>
     <div class="stat spam"><div class="n" id="s-spam">0</div><div class="l">Spam</div></div>
@@ -595,12 +622,35 @@ function updateCounter() {
 
 function showToast(msg, action) {
   const t = document.getElementById('toast');
-  const colors = { keep: '#22c55e', spam: '#ef4444', unsub: '#3b82f6', kunread: '#a78bfa' };
+  const colors = { keep: '#22c55e', spam: '#ef4444', unsub: '#3b82f6', kunread: '#a78bfa', undo: '#60a5fa' };
   t.style.color = colors[action] || '#f1f5f9';
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// ── UNDO ───────────────────────────────────────────────────────────────────
+const undoStack = []; // { action, cardIdx }
+const MAX_UNDO = 5;
+
+function updateUndoBtn() {
+  const btn = document.getElementById('undo-btn');
+  btn.disabled = undoStack.length === 0;
+  document.getElementById('undo-badge').textContent = undoStack.length;
+}
+
+function undoAction() {
+  if (undoStack.length === 0) return;
+  const { action, cardIdx } = undoStack.pop();
+  counts[action]--;
+  document.getElementById('s-' + action).textContent = counts[action];
+  current = cardIdx;
+  // Hide done screen if showing
+  document.getElementById('done-screen').style.display = 'none';
+  renderCards();
+  showToast('↩ Undone', 'undo');
+  updateUndoBtn();
 }
 
 function showDone() {
@@ -617,6 +667,8 @@ function restart() {
   current = 0;
   counts.keep = counts.spam = counts.unsub = counts.kunread = 0;
   ['keep','spam','unsub','kunread'].forEach(a => document.getElementById('s-'+a).textContent = 0);
+  undoStack.length = 0;
+  updateUndoBtn();
   document.getElementById('done-screen').style.display = 'none';
   renderCards();
 }
@@ -626,6 +678,10 @@ function restart() {
 window.doAction = function(action, animate = true) {
   if (action === null) { current++; setTimeout(() => { if (current >= EMAILS.length) showDone(); else renderCards(); }, 400); return; }
   if (current >= EMAILS.length) return;
+  // Push to undo stack before acting
+  undoStack.push({ action, cardIdx: current });
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  updateUndoBtn();
   counts[action]++;
   document.getElementById('s-' + action).textContent = counts[action];
   const msgs = toastMsgs[action];

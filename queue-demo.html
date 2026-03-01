@@ -204,6 +204,24 @@
       padding: 6px 14px; cursor: pointer;
     }
 
+    /* ── UNDO BUTTON ── */
+    #undo-btn {
+      display: flex; align-items: center; gap: 5px;
+      border: none; background: rgba(59,130,246,0.1); cursor: pointer;
+      font-size: 13px; font-weight: 600; color: #60a5fa;
+      border-radius: 8px; padding: 6px 12px;
+      transition: background 0.15s, opacity 0.15s;
+      position: relative;
+    }
+    #undo-btn:disabled { opacity: 0.3; cursor: default; background: none; }
+    #undo-btn:not(:disabled):active { background: rgba(59,130,246,0.2); }
+    #undo-badge {
+      background: #3b82f6; color: white; border-radius: 8px;
+      font-size: 10px; font-weight: 700; padding: 1px 5px; min-width: 16px;
+      text-align: center; display: none;
+    }
+    #undo-btn:not(:disabled) #undo-badge { display: inline-block; }
+
     /* ── TOAST ── */
     #toast {
       position: fixed; top: calc(env(safe-area-inset-top,16px) + 60px);
@@ -229,6 +247,7 @@
 <div id="topbar">
   <div class="topbar-row1">
     <div class="logo">em<span>AI</span>l Agent</div>
+    <button id="undo-btn" disabled onclick="undoAction()">↩ Undo <span id="undo-badge">0</span></button>
     <div class="mode-badge">⚙️ Training Mode</div>
   </div>
   <div class="stats-row">
@@ -303,7 +322,9 @@ const activityLog = [
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 const counts = { kept:0, spammed:0, unsub:0 };
-const actedCards = new Set();
+const actedCards = new Map(); // idx -> entry object
+const undoStack = [];         // { idx, cfgStat }
+const MAX_UNDO = 5;
 let countdown = 30;
 let currentTab = 'queue';
 
@@ -409,8 +430,13 @@ function act(idx, action) {
     checkEmpty();
   }, 300);
 
-  // Track
-  actedCards.add({ idx, icon: cfg.icon, label: cfg.label, from: email.from, subj: email.subject, color: cfg.color });
+  // Track (Map: idx → entry)
+  actedCards.set(idx, { idx, icon: cfg.icon, label: cfg.label, from: email.from, subj: email.subject, color: cfg.color });
+
+  // Push to undo stack
+  undoStack.push({ idx, cfgStat: cfg.stat });
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  updateUndoBtn();
 
   // Stats
   if (cfg.stat) {
@@ -445,8 +471,45 @@ function showTab(tab) {
   if (tab === 'activity') buildActivity();
 }
 
+// ── UNDO ───────────────────────────────────────────────────────────────────
+function updateUndoBtn() {
+  const btn = document.getElementById('undo-btn');
+  btn.disabled = undoStack.length === 0;
+  document.getElementById('undo-badge').textContent = undoStack.length;
+}
+
+function undoAction() {
+  if (undoStack.length === 0) return;
+  const { idx, cfgStat } = undoStack.pop();
+  // Remove from actedCards
+  actedCards.delete(idx);
+  // Show card again
+  const card = document.getElementById('card-' + idx);
+  card.style.display = '';
+  card.style.transition = 'none';
+  card.style.opacity = '1';
+  card.style.transform = '';
+  // Decrement stat
+  if (cfgStat) {
+    counts[cfgStat]--;
+    document.getElementById('s-' + cfgStat).textContent = counts[cfgStat];
+  }
+  // Update pending count
+  const remaining = EMAILS.length - actedCards.size;
+  document.getElementById('s-total').textContent = remaining;
+  document.getElementById('pending-badge').textContent = remaining;
+  // Hide empty state if it was showing
+  if (document.getElementById('empty-state').style.display === 'flex') {
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('queue-panel').style.display = '';
+  }
+  showToast('↩ Undone', 'undo');
+  buildActivity();
+  updateUndoBtn();
+}
+
 // ── TOAST ──────────────────────────────────────────────────────────────────
-const actionColors = { spam:'#ef4444', unsub:'#3b82f6', delete:'#f97316', keep:'#22c55e', kunread:'#a78bfa', info:'#60a5fa' };
+const actionColors = { spam:'#ef4444', unsub:'#3b82f6', delete:'#f97316', keep:'#22c55e', kunread:'#a78bfa', undo:'#60a5fa', info:'#60a5fa' };
 function showToast(msg, action) {
   const t = document.getElementById('toast');
   t.style.color = actionColors[action] || '#f1f5f9';
@@ -465,6 +528,8 @@ setInterval(() => {
 // ── RESTART ────────────────────────────────────────────────────────────────
 function restart() {
   actedCards.clear();
+  undoStack.length = 0;
+  updateUndoBtn();
   counts.kept = counts.spammed = counts.unsub = 0;
   ['kept','spammed','unsub'].forEach(k => document.getElementById('s-'+k).textContent = 0);
   document.getElementById('s-total').textContent = EMAILS.length;
