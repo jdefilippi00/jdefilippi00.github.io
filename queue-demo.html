@@ -11,7 +11,7 @@
       --keep:   #22c55e;
       --spam:   #ef4444;
       --unsub:  #3b82f6;
-      --skip:   #9ca3af;
+      --kunread: #a78bfa;
       --del:    #f97316;
       --bg:     #0f172a;
       --card:   #1e293b;
@@ -156,7 +156,7 @@
     .act-btn.unsub { color: var(--unsub); } .act-btn.unsub:active { background: rgba(59,130,246,0.1); }
     .act-btn.del   { color: var(--del);   } .act-btn.del:active   { background: rgba(249,115,22,0.1); }
     .act-btn.keep  { color: var(--keep);  } .act-btn.keep:active  { background: rgba(34,197,94,0.1); }
-    .act-btn.skip  { color: var(--skip);  } .act-btn.skip:active  { background: rgba(156,163,175,0.1); }
+    .act-btn.kunread { color: var(--kunread); } .act-btn.kunread:active { background: rgba(167,139,250,0.1); }
 
     /* ── ACTIVITY FEED ── */
     #activity-panel { display: none; padding: 0 0 80px; }
@@ -298,7 +298,7 @@ const activityLog = [
   { icon:'✅', label:'Kept', from:'GitHub', subj:'Pull request #42 approved', time:'7h ago', color:'#22c55e' },
   { icon:'🔍', label:'Low Confidence', from:'NewsBlast', subj:'Your daily briefing', time:'8h ago', color:'#fbbf24' },
   { icon:'🚫', label:'Spammed', from:'SuperSaver Deals', subj:'Unbelievable savings inside', time:'9h ago', color:'#ef4444' },
-  { icon:'⏭', label:'Skipped', from:'ProductHunt', subj:'Top products of the week', time:'10h ago', color:'#9ca3af' },
+  { icon:'📌', label:'Kept Unread', from:'ProductHunt', subj:'Top products of the week', time:'10h ago', color:'#a78bfa' },
 ];
 
 // ── STATE ──────────────────────────────────────────────────────────────────
@@ -345,7 +345,7 @@ function makeCard(email, idx) {
       <button class="act-btn unsub" onclick="act(${idx},'unsub')"><div class="icon">📧</div>Unsub</button>
       <button class="act-btn del"   onclick="act(${idx},'delete')"><div class="icon">🗑️</div>Delete</button>
       <button class="act-btn keep"  onclick="act(${idx},'keep')"><div class="icon">✅</div>Keep</button>
-      <button class="act-btn skip"  onclick="act(${idx},'skip')"><div class="icon">⏭</div>Skip</button>
+      <button class="act-btn kunread" onclick="act(${idx},'kunread')"><div class="icon">📌</div>Keep Unread</button>
     </div>
   `;
   return card;
@@ -391,7 +391,7 @@ const actionConfig = {
   unsub:  { icon:'📧', label:'Unsubscribed',stat:'unsub',   color:'#3b82f6', toast:'📧 Unsubscribing…' },
   delete: { icon:'🗑️', label:'Deleted',    stat:null,      color:'#f97316', toast:'🗑️ Moved to trash' },
   keep:   { icon:'✅', label:'Kept',        stat:'kept',    color:'#22c55e', toast:'✅ Kept!' },
-  skip:   { icon:'⏭', label:'Skipped',     stat:null,      color:'#9ca3af', toast:'⏭ Skipped' },
+  kunread: { icon:'📌', label:'Kept Unread', stat:null,      color:'#a78bfa', toast:'📌 Kept unread' },
 };
 
 function act(idx, action) {
@@ -446,7 +446,7 @@ function showTab(tab) {
 }
 
 // ── TOAST ──────────────────────────────────────────────────────────────────
-const actionColors = { spam:'#ef4444', unsub:'#3b82f6', delete:'#f97316', keep:'#22c55e', skip:'#9ca3af', info:'#60a5fa' };
+const actionColors = { spam:'#ef4444', unsub:'#3b82f6', delete:'#f97316', keep:'#22c55e', kunread:'#a78bfa', info:'#60a5fa' };
 function showToast(msg, action) {
   const t = document.getElementById('toast');
   t.style.color = actionColors[action] || '#f1f5f9';

@@ -11,7 +11,7 @@
       --keep:   #22c55e;
       --spam:   #ef4444;
       --unsub:  #3b82f6;
-      --skip:   #9ca3af;
+      --kunread: #a78bfa;
       --bg:     #0f172a;
       --card:   #1e293b;
       --border: #334155;
@@ -46,7 +46,7 @@
     #topbar .stat.keep .n { color: var(--keep); }
     #topbar .stat.spam .n { color: var(--spam); }
     #topbar .stat.unsub .n { color: var(--unsub); }
-    #topbar .stat.skip .n { color: var(--skip); }
+    #topbar .stat.kunread .n { color: var(--kunread); }
 
     /* ── CARD ARENA ── */
     #arena {
@@ -141,7 +141,7 @@
     .overlay.keep-ov  { background: rgba(34,197,94,0.25);  color: var(--keep);  border: 3px solid var(--keep);  border-radius: var(--radius); }
     .overlay.spam-ov  { background: rgba(239,68,68,0.25);  color: var(--spam);  border: 3px solid var(--spam);  border-radius: var(--radius); }
     .overlay.unsub-ov { background: rgba(59,130,246,0.25); color: var(--unsub); border: 3px solid var(--unsub); border-radius: var(--radius); }
-    .overlay.skip-ov  { background: rgba(156,163,175,0.15);color: var(--skip);  border: 3px solid var(--skip);  border-radius: var(--radius); }
+    .overlay.kunread-ov { background: rgba(167,139,250,0.15);color: var(--kunread); border: 3px solid var(--kunread); border-radius: var(--radius); }
 
     /* ── HINT ARROWS ── */
     #hints {
@@ -170,6 +170,16 @@
     }
     #hint-top .arrow { font-size: 22px; }
 
+    #hint-bottom {
+      position: fixed; bottom: calc(env(safe-area-inset-bottom,16px) + 110px);
+      left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column-reverse; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.4px; color: var(--kunread); opacity: 0.25;
+      pointer-events: none; z-index: 5;
+    }
+    #hint-bottom .arrow { font-size: 22px; }
+
     /* ── BOTTOM BAR ── */
     #bottombar {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -188,7 +198,7 @@
     .action-btn.spam  { color: var(--spam);  } .action-btn.spam:active  { background: rgba(239,68,68,0.1); }
     .action-btn.unsub { color: var(--unsub); } .action-btn.unsub:active { background: rgba(59,130,246,0.1); }
     .action-btn.keep  { color: var(--keep);  } .action-btn.keep:active  { background: rgba(34,197,94,0.1); }
-    .action-btn.skip  { color: var(--skip);  } .action-btn.skip:active  { background: rgba(156,163,175,0.1); }
+    .action-btn.kunread { color: var(--kunread); } .action-btn.kunread:active { background: rgba(167,139,250,0.1); }
 
     /* counter */
     #counter {
@@ -219,7 +229,7 @@
     .done-stat.keep  .n { color: var(--keep); }
     .done-stat.spam  .n { color: var(--spam); }
     .done-stat.unsub .n { color: var(--unsub); }
-    .done-stat.skip  .n { color: var(--skip); }
+    .done-stat.kunread .n { color: var(--kunread); }
     #restart-btn {
       background: #3b82f6; color: white; border: none;
       padding: 14px 40px; border-radius: 14px; font-size: 16px; font-weight: 600;
@@ -248,16 +258,17 @@
     <div class="stat keep"><div class="n" id="s-keep">0</div><div class="l">Keep</div></div>
     <div class="stat spam"><div class="n" id="s-spam">0</div><div class="l">Spam</div></div>
     <div class="stat unsub"><div class="n" id="s-unsub">0</div><div class="l">Unsub</div></div>
-    <div class="stat skip"><div class="n" id="s-skip">0</div><div class="l">Skip</div></div>
+    <div class="stat kunread"><div class="n" id="s-kunread">0</div><div class="l">Unread</div></div>
   </div>
 </div>
 
 <!-- SWIPE HINTS -->
 <div id="hints">
   <div class="hint left"><div class="arrow">←</div><div>Spam</div></div>
-  <div class="hint right"><div class="arrow">→</div><div>Keep</div></div>
+  <div class="hint right"><div class="arrow">→</div><div>Keep Read</div></div>
 </div>
 <div id="hint-top"><div class="arrow">↑</div><div>Unsub</div></div>
+<div id="hint-bottom"><div class="arrow">↓</div><div>Keep Unread</div></div>
 
 <!-- CARD ARENA -->
 <div id="arena"></div>
@@ -267,10 +278,10 @@
 
 <!-- BOTTOM BAR -->
 <div id="bottombar">
-  <button class="action-btn spam"  onclick="doAction('spam')"><div class="icon">🚫</div>Spam</button>
-  <button class="action-btn unsub" onclick="doAction('unsub')"><div class="icon">📧</div>Unsub</button>
-  <button class="action-btn keep"  onclick="doAction('keep')"><div class="icon">✅</div>Keep</button>
-  <button class="action-btn skip"  onclick="doAction('skip')"><div class="icon">⏭</div>Skip</button>
+  <button class="action-btn spam"    onclick="doAction('spam')"><div class="icon">🚫</div>Spam</button>
+  <button class="action-btn unsub"   onclick="doAction('unsub')"><div class="icon">📧</div>Unsub</button>
+  <button class="action-btn keep"    onclick="doAction('keep')"><div class="icon">✅</div>Keep Read</button>
+  <button class="action-btn kunread" onclick="doAction('kunread')"><div class="icon">📌</div>Keep Unread</button>
 </div>
 
 <!-- DONE SCREEN -->
@@ -279,10 +290,10 @@
   <h2>Inbox Clear!</h2>
   <p>You triaged all <strong id="done-total">0</strong> emails.<br>Here's what you decided:</p>
   <div class="done-stats">
-    <div class="done-stat keep"><div class="n" id="d-keep">0</div><div class="l">✅ Kept</div></div>
+    <div class="done-stat keep"><div class="n" id="d-keep">0</div><div class="l">✅ Kept Read</div></div>
     <div class="done-stat spam"><div class="n" id="d-spam">0</div><div class="l">🚫 Spammed</div></div>
     <div class="done-stat unsub"><div class="n" id="d-unsub">0</div><div class="l">📧 Unsubbed</div></div>
-    <div class="done-stat skip"><div class="n" id="d-skip">0</div><div class="l">⏭ Skipped</div></div>
+    <div class="done-stat kunread"><div class="n" id="d-kunread">0</div><div class="l">📌 Kept Unread</div></div>
   </div>
   <button id="restart-btn" onclick="restart()">Try Again</button>
 </div>
@@ -407,7 +418,7 @@ const EMAILS = [
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 let current = 0;
-const counts = { keep: 0, spam: 0, unsub: 0, skip: 0 };
+const counts = { keep: 0, spam: 0, unsub: 0, kunread: 0 };
 
 // ── RENDER CARDS ───────────────────────────────────────────────────────────
 function renderCards() {
@@ -456,10 +467,10 @@ function makeCard(email, isActive) {
       <div class="conf-pct" style="color:${color}">${confPct}%</div>
     </div>
     <div style="margin-top:12px"><div class="tags">${email.tags.map(t=>`<div class="tag">${t}</div>`).join('')}</div></div>
-    <div class="overlay keep-ov"><div class="icon">✅</div><div>Keep</div></div>
+    <div class="overlay keep-ov"><div class="icon">✅</div><div>Keep Read</div></div>
     <div class="overlay spam-ov"><div class="icon">🚫</div><div>Spam</div></div>
     <div class="overlay unsub-ov"><div class="icon">📧</div><div>Unsub</div></div>
-    <div class="overlay skip-ov"><div class="icon">⏭</div><div>Skip</div></div>
+    <div class="overlay kunread-ov"><div class="icon">📌</div><div>Keep Unread</div></div>
   `;
   return card;
 }
@@ -488,6 +499,8 @@ function attachSwipe() {
     const absDx = Math.abs(dx), absDy = Math.abs(dy);
     if (absDy > absDx && dy < -40) {
       card.querySelector('.unsub-ov').style.opacity = Math.min(absDy / THRESHOLD, 1);
+    } else if (absDy > absDx && dy > 40) {
+      card.querySelector('.kunread-ov').style.opacity = Math.min(absDy / THRESHOLD, 1);
     } else if (dx > 40) {
       card.querySelector('.keep-ov').style.opacity = Math.min(absDx / THRESHOLD, 1);
     } else if (dx < -40) {
@@ -504,6 +517,8 @@ function attachSwipe() {
 
     if (absDy > absDx && dy < -THRESHOLD) {
       flyCard(card, 0, -window.innerHeight, 'unsub');
+    } else if (absDy > absDx && dy > THRESHOLD) {
+      flyCard(card, 0, window.innerHeight, 'kunread');
     } else if (dx > THRESHOLD) {
       flyCard(card, window.innerWidth, 0, 'keep');
     } else if (dx < -THRESHOLD) {
@@ -534,10 +549,10 @@ function flyCard(card, tx, ty, action) {
 
 // ── ACTIONS ────────────────────────────────────────────────────────────────
 const toastMsgs = {
-  keep:  ['✅ Kept!', '✅ Keeping it'],
-  spam:  ['🚫 Marked as spam', '🚫 Spammed!'],
-  unsub: ['📧 Unsubscribing…', '📧 Unsub queued'],
-  skip:  ['⏭ Skipped', '⏭ Next up…']
+  keep:    ['✅ Kept & marked read!', '✅ Keeping it'],
+  spam:    ['🚫 Marked as spam', '🚫 Spammed!'],
+  unsub:   ['📧 Unsubscribing…', '📧 Unsub queued'],
+  kunread: ['📌 Kept unread', '📌 Saving for later']
 };
 
 function doAction(action, animate = true) {
@@ -553,7 +568,7 @@ function doAction(action, animate = true) {
     const card = getActiveCard();
     if (card) {
       const tx = action === 'spam' ? -window.innerWidth : action === 'keep' ? window.innerWidth : 0;
-      const ty = action === 'unsub' ? -window.innerHeight : action === 'skip' ? window.innerHeight * 0.3 : 0;
+      const ty = action === 'unsub' ? -window.innerHeight : action === 'kunread' ? window.innerHeight : 0;
       const ov = card.querySelector('.' + action + '-ov');
       if (ov) ov.style.opacity = 1;
       flyCard(card, tx, ty, null);
@@ -580,7 +595,7 @@ function updateCounter() {
 
 function showToast(msg, action) {
   const t = document.getElementById('toast');
-  const colors = { keep: '#22c55e', spam: '#ef4444', unsub: '#3b82f6', skip: '#9ca3af' };
+  const colors = { keep: '#22c55e', spam: '#ef4444', unsub: '#3b82f6', kunread: '#a78bfa' };
   t.style.color = colors[action] || '#f1f5f9';
   t.textContent = msg;
   t.classList.add('show');
@@ -592,16 +607,16 @@ function showDone() {
   const s = document.getElementById('done-screen');
   s.style.display = 'flex';
   document.getElementById('done-total').textContent = EMAILS.length;
-  document.getElementById('d-keep').textContent  = counts.keep;
-  document.getElementById('d-spam').textContent  = counts.spam;
-  document.getElementById('d-unsub').textContent = counts.unsub;
-  document.getElementById('d-skip').textContent  = counts.skip;
+  document.getElementById('d-keep').textContent    = counts.keep;
+  document.getElementById('d-spam').textContent    = counts.spam;
+  document.getElementById('d-unsub').textContent   = counts.unsub;
+  document.getElementById('d-kunread').textContent = counts.kunread;
 }
 
 function restart() {
   current = 0;
-  counts.keep = counts.spam = counts.unsub = counts.skip = 0;
-  ['keep','spam','unsub','skip'].forEach(a => document.getElementById('s-'+a).textContent = 0);
+  counts.keep = counts.spam = counts.unsub = counts.kunread = 0;
+  ['keep','spam','unsub','kunread'].forEach(a => document.getElementById('s-'+a).textContent = 0);
   document.getElementById('done-screen').style.display = 'none';
   renderCards();
 }
@@ -619,7 +634,7 @@ window.doAction = function(action, animate = true) {
     const card = getActiveCard();
     if (card) {
       const tx = action === 'spam' ? -window.innerWidth : action === 'keep' ? window.innerWidth : 0;
-      const ty = action === 'unsub' ? -window.innerHeight : action === 'skip' ? window.innerHeight * 0.3 : 0;
+      const ty = action === 'unsub' ? -window.innerHeight : action === 'kunread' ? window.innerHeight : 0;
       const ov = card.querySelector('.' + action + '-ov');
       if (ov) ov.style.opacity = 1;
       flyCard(card, tx, ty, null);
