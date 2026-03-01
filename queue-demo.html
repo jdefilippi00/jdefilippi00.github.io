@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>emAIl Agent — Queue UI Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --keep:   #22c55e;
+      --spam:   #ef4444;
+      --unsub:  #3b82f6;
+      --skip:   #9ca3af;
+      --del:    #f97316;
+      --bg:     #0f172a;
+      --card:   #1e293b;
+      --border: #334155;
+      --text:   #f1f5f9;
+      --muted:  #94a3b8;
+      --radius: 16px;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      position: sticky; top: 0; z-index: 100;
+      padding: env(safe-area-inset-top, 16px) 16px 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-row1 {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 10px;
+    }
+    .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo span { color: #60a5fa; }
+    .mode-badge {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+      background: rgba(251,191,36,0.15); color: #fbbf24;
+      padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(251,191,36,0.3);
+    }
+    .stats-row {
+      display: flex; padding-bottom: 10px; gap: 0;
+    }
+    .stat {
+      flex: 1; text-align: center; padding: 6px 0;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat .n { font-size: 18px; font-weight: 700; }
+    .stat .l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 1px; }
+    .stat.total .n  { color: var(--text); }
+    .stat.kept  .n  { color: var(--keep); }
+    .stat.spammed .n{ color: var(--spam); }
+    .stat.unsub .n  { color: var(--unsub); }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex; border-bottom: none; gap: 0; margin-top: 4px;
+    }
+    .tab {
+      flex: 1; text-align: center; padding: 8px 0;
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      border-bottom: 2px solid transparent; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      padding: 14px 16px 6px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--muted);
+    }
+
+    /* ── EMAIL CARD ── */
+    .email-card {
+      margin: 0 12px 12px;
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .email-card.acted { opacity: 0.4; }
+
+    .card-header {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 14px 10px;
+    }
+    .avatar {
+      width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .card-meta { flex: 1; min-width: 0; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+    .sender-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+    .subject { font-size: 14px; font-weight: 500; line-height: 1.3; margin-bottom: 4px; }
+    .preview-text {
+      font-size: 12.5px; color: var(--muted); line-height: 1.5;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    /* AI suggestion row */
+    .ai-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border-top: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    .ai-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .ai-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .ai-badge.keep-ai   { background: rgba(34,197,94,0.15);  color: #4ade80; }
+    .ai-badge.spam-ai   { background: rgba(239,68,68,0.15);  color: #f87171; }
+    .ai-badge.unsub-ai  { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .ai-badge.review-ai { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .conf-pill {
+      font-size: 11px; color: var(--muted); margin-left: auto;
+    }
+    .conf-pill strong { font-weight: 700; }
+
+    /* Confidence bar */
+    .conf-bar-row { padding: 0 14px 10px; display: flex; align-items: center; gap: 8px; }
+    .conf-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .conf-fill { height: 100%; border-radius: 2px; }
+
+    /* ── ACTION BUTTONS ── */
+    .actions {
+      display: flex; border-top: 1px solid var(--border);
+    }
+    .act-btn {
+      flex: 1; border: none; background: none; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 10px 4px;
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+      transition: background 0.15s, transform 0.1s;
+      border-right: 1px solid var(--border);
+    }
+    .act-btn:last-child { border-right: none; }
+    .act-btn:active { transform: scale(0.93); }
+    .act-btn .icon { font-size: 20px; }
+    .act-btn.spam  { color: var(--spam);  } .act-btn.spam:active  { background: rgba(239,68,68,0.1); }
+    .act-btn.unsub { color: var(--unsub); } .act-btn.unsub:active { background: rgba(59,130,246,0.1); }
+    .act-btn.del   { color: var(--del);   } .act-btn.del:active   { background: rgba(249,115,22,0.1); }
+    .act-btn.keep  { color: var(--keep);  } .act-btn.keep:active  { background: rgba(34,197,94,0.1); }
+    .act-btn.skip  { color: var(--skip);  } .act-btn.skip:active  { background: rgba(156,163,175,0.1); }
+
+    /* ── ACTIVITY FEED ── */
+    #activity-panel { display: none; padding: 0 0 80px; }
+    .activity-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .act-icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+    .act-info { flex: 1; min-width: 0; }
+    .act-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .act-subj { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .act-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+    /* ── QUEUE PANEL ── */
+    #queue-panel { padding-bottom: 80px; }
+
+    /* ── EMPTY STATE ── */
+    #empty-state {
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 60px 32px; text-align: center;
+    }
+    #empty-state .icon { font-size: 56px; margin-bottom: 16px; }
+    #empty-state h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    #empty-state p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+    #empty-state button {
+      background: #3b82f6; color: white; border: none;
+      padding: 12px 28px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer;
+    }
+
+    /* ── AUTO REFRESH BAR ── */
+    #refresh-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: 12px 16px env(safe-area-inset-bottom, 12px);
+      background: var(--bg); border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; z-index: 100;
+    }
+    .refresh-left { display: flex; align-items: center; gap: 8px; }
+    .refresh-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--keep); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .refresh-text { font-size: 13px; color: var(--muted); }
+    .refresh-text strong { color: var(--text); }
+    .run-btn {
+      font-size: 13px; font-weight: 600; color: #60a5fa;
+      background: rgba(59,130,246,0.1); border: none; border-radius: 8px;
+      padding: 6px 14px; cursor: pointer;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; top: calc(env(safe-area-inset-top,16px) + 60px);
+      left: 50%; transform: translateX(-50%) translateY(-20px);
+      background: #1e293b; border: 1px solid var(--border);
+      padding: 10px 20px; border-radius: 30px;
+      font-size: 13px; font-weight: 600; white-space: nowrap;
+      opacity: 0; transition: opacity 0.2s, transform 0.2s; z-index: 300; pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── PENDING BADGE ── */
+    .pending-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #ef4444; color: white; border-radius: 10px;
+      font-size: 11px; font-weight: 700; padding: 1px 6px; margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="topbar-row1">
+    <div class="logo">em<span>AI</span>l Agent</div>
+    <div class="mode-badge">⚙️ Training Mode</div>
+  </div>
+  <div class="stats-row">
+    <div class="stat total"><div class="n" id="s-total">10</div><div class="l">Pending</div></div>
+    <div class="stat kept"><div class="n" id="s-kept">0</div><div class="l">Kept</div></div>
+    <div class="stat spammed"><div class="n" id="s-spammed">0</div><div class="l">Spammed</div></div>
+    <div class="stat unsub"><div class="n" id="s-unsub">0</div><div class="l">Unsub'd</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('queue')">Pending <span class="pending-count" id="pending-badge">10</span></div>
+    <div class="tab" onclick="showTab('activity')">Recent Activity</div>
+  </div>
+</div>
+
+<!-- QUEUE PANEL -->
+<div id="queue-panel"></div>
+
+<!-- EMPTY STATE -->
+<div id="empty-state">
+  <div class="icon">🎉</div>
+  <h3>All caught up!</h3>
+  <p>No emails pending review.<br>The agent will notify you when new ones arrive.</p>
+  <button onclick="restart()">Reset Demo</button>
+</div>
+
+<!-- ACTIVITY PANEL -->
+<div id="activity-panel">
+  <div class="section-label">Recent Activity</div>
+  <div id="activity-feed"></div>
+</div>
+
+<!-- REFRESH BAR -->
+<div id="refresh-bar">
+  <div class="refresh-left">
+    <div class="refresh-dot"></div>
+    <div class="refresh-text">Refresh in <strong id="countdown">30</strong>s</div>
+  </div>
+  <button class="run-btn" onclick="showToast('▶ Running agent…','info')">▶ Run Now</button>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ── MOCK DATA ──────────────────────────────────────────────────────────────
+const EMAILS = [
+  { from:"USPS Informed Delivery", email:"informed@email.informeddelivery.usps.com", subject:"Your Informed Delivery Daily Digest", preview:"3 pieces of mail and 2 packages are scheduled for delivery today. Tap to see images of your incoming mail.", time:"6:02 AM", avatar:"📬", avatarBg:"#1e40af", ai:"keep", confidence:97, tags:["Trusted","USPS"] },
+  { from:"ENVE Composites", email:"no.reply@enve.com", subject:"Mick Schumacher Takes ENVE to the INDYCAR Stage 🏎️", preview:"The future of racing is here. Mick Schumacher and the ENVE team push the limits of carbon fiber technology at this weekend's INDYCAR race. Shop the collection.", time:"7:14 AM", avatar:"🚴", avatarBg:"#7c3aed", ai:"unsub", confidence:82, tags:["Marketing","Cycling"] },
+  { from:"Strava", email:"no-reply@strava.com", subject:"Weekly Training Summary — you crushed it! 💪", preview:"This week: 3 activities, 47.2 miles, 2,840 ft elevation gain. You're in the top 15% of athletes in your area.", time:"8:00 AM", avatar:"🏃", avatarBg:"#ea580c", ai:"keep", confidence:91, tags:["Fitness","Trusted"] },
+  { from:"Groupon", email:"deals@groupon.com", subject:"🔥 Last chance: 70% off local restaurants near you", preview:"James, these deals expire at midnight! Restaurants, spas, and activities in your area at up to 70% off. Don't miss out.", time:"8:31 AM", avatar:"💸", avatarBg:"#16a34a", ai:"spam", confidence:95, tags:["Spam","Deals"] },
+  { from:"Chase Bank", email:"no.reply@chase.com", subject:"Your statement is ready — account ending 4821", preview:"Your December statement is now available. Log in to view your balance, transactions, and minimum payment due. Payment due January 22.", time:"9:05 AM", avatar:"🏦", avatarBg:"#0369a1", ai:"keep", confidence:99, tags:["Financial","Important"] },
+  { from:"LinkedIn", email:"messages-noreply@linkedin.com", subject:"James, 8 people viewed your profile this week", preview:"You're getting noticed! See who's looking at your profile and find out how you compare to other professionals in your network.", time:"10:17 AM", avatar:"💼", avatarBg:"#0077b5", ai:"unsub", confidence:74, tags:["Social","Marketing"] },
+  { from:"REI Co-op", email:"rei@email.rei.com", subject:"Flash Sale ⚡ 30% off hiking gear — 24 hrs only", preview:"Members get early access! Shop our biggest sale of the season: trail shoes, trekking poles, rain jackets, and more. Sale ends tomorrow at midnight.", time:"11:44 AM", avatar:"🏔️", avatarBg:"#166534", ai:"unsub", confidence:78, tags:["Retail","Sale"] },
+  { from:"Verizon", email:"VZWMail@ecrm.verizonwireless.com", subject:"Your monthly bill is ready — $134.22 due Feb 14", preview:"Hi James, your February Verizon bill is now available. Amount due: $134.22 by February 14. Set up AutoPay to save $10/month.", time:"12:01 PM", avatar:"📱", avatarBg:"#dc2626", ai:"keep", confidence:96, tags:["Utility","Bill"] },
+  { from:"noreply@promotions247.net", email:"noreply@promotions247.net", subject:"Congratulations! You've been selected for a FREE gift 🎁", preview:"You have been randomly selected to receive a complimentary gift. Click below to claim your reward before it expires. Limited time offer.", time:"1:58 PM", avatar:"⚠️", avatarBg:"#b45309", ai:"spam", confidence:99, tags:["Spam","Suspicious"] },
+  { from:"Morning Brew", email:"hello@morningbrew.com", subject:"☕ The big tech story everyone's talking about", preview:"Good morning! Today: AI regulation hits a new milestone, markets react to Fed comments, and a startup just raised $400M to solve a problem you didn't know you had.", time:"6:00 AM", avatar:"☕", avatarBg:"#92400e", ai:"review", confidence:51, tags:["Newsletter","Tech"] }
+];
+
+const aiColors = { keep:'#22c55e', spam:'#ef4444', unsub:'#3b82f6', review:'#fbbf24' };
+const aiBadgeLabel = { keep:'✓ Keep', spam:'✕ Spam', unsub:'↑ Unsub', review:'? Review' };
+
+const activityLog = [
+  { icon:'🛡', label:'Trusted', from:'Apple', subj:'Your receipt from Apple', time:'2h ago', color:'#22c55e' },
+  { icon:'🚫', label:'Auto-Spam', from:'DealScout Daily', subj:'🔥 50 deals you can\'t miss!', time:'3h ago', color:'#ef4444' },
+  { icon:'📧', label:'Unsubscribed', from:'TechCrunch Newsletter', subj:'This week in tech', time:'5h ago', color:'#3b82f6' },
+  { icon:'👤', label:'Personal', from:'Mike Johnson', subj:'Re: Weekend plans', time:'6h ago', color:'#a78bfa' },
+  { icon:'✅', label:'Kept', from:'GitHub', subj:'Pull request #42 approved', time:'7h ago', color:'#22c55e' },
+  { icon:'🔍', label:'Low Confidence', from:'NewsBlast', subj:'Your daily briefing', time:'8h ago', color:'#fbbf24' },
+  { icon:'🚫', label:'Spammed', from:'SuperSaver Deals', subj:'Unbelievable savings inside', time:'9h ago', color:'#ef4444' },
+  { icon:'⏭', label:'Skipped', from:'ProductHunt', subj:'Top products of the week', time:'10h ago', color:'#9ca3af' },
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+const counts = { kept:0, spammed:0, unsub:0 };
+const actedCards = new Set();
+let countdown = 30;
+let currentTab = 'queue';
+
+// ── BUILD QUEUE ─────────────────────────────────────────────────────────────
+function buildQueue() {
+  const panel = document.getElementById('queue-panel');
+  panel.innerHTML = '<div class="section-label">Pending Review</div>';
+  EMAILS.forEach((email, i) => {
+    panel.appendChild(makeCard(email, i));
+  });
+}
+
+function makeCard(email, idx) {
+  const color = aiColors[email.ai];
+  const card = document.createElement('div');
+  card.className = 'email-card';
+  card.id = 'card-' + idx;
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="avatar" style="background:${email.avatarBg}">${email.avatar}</div>
+      <div class="card-meta">
+        <div class="card-top">
+          <div class="sender-name">${email.from}</div>
+          <div class="time">${email.time}</div>
+        </div>
+        <div class="subject">${email.subject}</div>
+        <div class="preview-text">${email.preview}</div>
+      </div>
+    </div>
+    <div class="ai-row">
+      <div class="ai-badge ${email.ai}-ai"><div class="dot"></div>${aiBadgeLabel[email.ai]}</div>
+      <div class="conf-pill">AI confidence: <strong style="color:${color}">${email.confidence}%</strong></div>
+    </div>
+    <div class="conf-bar-row">
+      <div class="conf-bar"><div class="conf-fill" style="width:${email.confidence}%;background:${color}"></div></div>
+    </div>
+    <div class="actions">
+      <button class="act-btn spam"  onclick="act(${idx},'spam')"><div class="icon">🚫</div>Spam</button>
+      <button class="act-btn unsub" onclick="act(${idx},'unsub')"><div class="icon">📧</div>Unsub</button>
+      <button class="act-btn del"   onclick="act(${idx},'delete')"><div class="icon">🗑️</div>Delete</button>
+      <button class="act-btn keep"  onclick="act(${idx},'keep')"><div class="icon">✅</div>Keep</button>
+      <button class="act-btn skip"  onclick="act(${idx},'skip')"><div class="icon">⏭</div>Skip</button>
+    </div>
+  `;
+  return card;
+}
+
+// ── BUILD ACTIVITY ─────────────────────────────────────────────────────────
+function buildActivity() {
+  const feed = document.getElementById('activity-feed');
+  feed.innerHTML = '';
+  // Session actions first (most recent)
+  actedCards.forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+    item.innerHTML = `
+      <div class="act-icon">${entry.icon}</div>
+      <div class="act-info">
+        <div class="act-name" style="color:${entry.color}">${entry.label} — ${entry.from}</div>
+        <div class="act-subj">${entry.subj}</div>
+      </div>
+      <div class="act-time">Just now</div>
+    `;
+    feed.prepend(item);
+  });
+  // Historical entries
+  activityLog.forEach(a => {
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+    item.innerHTML = `
+      <div class="act-icon" style="color:${a.color}">${a.icon}</div>
+      <div class="act-info">
+        <div class="act-name" style="color:${a.color}">${a.label} — ${a.from}</div>
+        <div class="act-subj">${a.subj}</div>
+      </div>
+      <div class="act-time">${a.time}</div>
+    `;
+    feed.appendChild(item);
+  });
+}
+
+// ── ACTIONS ────────────────────────────────────────────────────────────────
+const actionConfig = {
+  spam:   { icon:'🚫', label:'Spammed',    stat:'spammed', color:'#ef4444', toast:'🚫 Marked as spam' },
+  unsub:  { icon:'📧', label:'Unsubscribed',stat:'unsub',   color:'#3b82f6', toast:'📧 Unsubscribing…' },
+  delete: { icon:'🗑️', label:'Deleted',    stat:null,      color:'#f97316', toast:'🗑️ Moved to trash' },
+  keep:   { icon:'✅', label:'Kept',        stat:'kept',    color:'#22c55e', toast:'✅ Kept!' },
+  skip:   { icon:'⏭', label:'Skipped',     stat:null,      color:'#9ca3af', toast:'⏭ Skipped' },
+};
+
+function act(idx, action) {
+  if (actedCards.has(idx)) return;
+  const email = EMAILS[idx];
+  const cfg = actionConfig[action];
+  const card = document.getElementById('card-' + idx);
+
+  // Animate out
+  card.style.transition = 'opacity 0.3s, transform 0.3s';
+  card.style.opacity = '0';
+  card.style.transform = 'scale(0.95)';
+  setTimeout(() => {
+    card.style.display = 'none';
+    checkEmpty();
+  }, 300);
+
+  // Track
+  actedCards.add({ idx, icon: cfg.icon, label: cfg.label, from: email.from, subj: email.subject, color: cfg.color });
+
+  // Stats
+  if (cfg.stat) {
+    counts[cfg.stat]++;
+    document.getElementById('s-' + cfg.stat).textContent = counts[cfg.stat];
+  }
+  const remaining = EMAILS.length - actedCards.size;
+  document.getElementById('s-total').textContent = remaining;
+  document.getElementById('pending-badge').textContent = remaining;
+
+  showToast(cfg.toast, action);
+  buildActivity();
+}
+
+function checkEmpty() {
+  const remaining = EMAILS.length - actedCards.size;
+  if (remaining === 0) {
+    document.getElementById('queue-panel').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'flex';
+  }
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', (i===0&&tab==='queue')||(i===1&&tab==='activity'));
+  });
+  document.getElementById('queue-panel').style.display   = tab==='queue'    ? '' : 'none';
+  document.getElementById('empty-state').style.display   = (tab==='queue' && EMAILS.length - actedCards.size === 0) ? 'flex' : 'none';
+  document.getElementById('activity-panel').style.display = tab==='activity' ? '' : 'none';
+  if (tab === 'activity') buildActivity();
+}
+
+// ── TOAST ──────────────────────────────────────────────────────────────────
+const actionColors = { spam:'#ef4444', unsub:'#3b82f6', delete:'#f97316', keep:'#22c55e', skip:'#9ca3af', info:'#60a5fa' };
+function showToast(msg, action) {
+  const t = document.getElementById('toast');
+  t.style.color = actionColors[action] || '#f1f5f9';
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+// ── COUNTDOWN ──────────────────────────────────────────────────────────────
+setInterval(() => {
+  countdown = countdown > 0 ? countdown - 1 : 30;
+  document.getElementById('countdown').textContent = countdown;
+}, 1000);
+
+// ── RESTART ────────────────────────────────────────────────────────────────
+function restart() {
+  actedCards.clear();
+  counts.kept = counts.spammed = counts.unsub = 0;
+  ['kept','spammed','unsub'].forEach(k => document.getElementById('s-'+k).textContent = 0);
+  document.getElementById('s-total').textContent = EMAILS.length;
+  document.getElementById('pending-badge').textContent = EMAILS.length;
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('queue-panel').style.display = '';
+  buildQueue();
+  showTab('queue');
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+buildQueue();
+buildActivity();
+</script>
+</body>
+</html>
