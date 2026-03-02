@@ -406,6 +406,7 @@
     .done-stat.unsub   .n { color: var(--unsub); }
     .done-stat.kunread .n { color: var(--kunread); }
     .done-stat.del     .n { color: var(--del); }
+    .done-stat.del { grid-column: 1 / -1; justify-self: center; width: calc(50% - 6px); }
     #restart-btn {
       background: #3b82f6; color: white; border: none;
       padding: 14px 40px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer;
@@ -628,7 +629,7 @@ function makeCard(email, isActive) {
   const card = document.createElement('div');
   card.className = 'card' + (isActive ? ' active' : '');
   const color = confColor(email.ai);
-  const badgeLabel = email.ai === 'keep' ? '✓ Keep' : email.ai === 'spam' ? '✕ Spam' : email.ai === 'unsub' ? '↑ Unsubscribe' : '? Review';
+  const badgeLabel = email.ai === 'keep' ? '→ Keep Read' : email.ai === 'spam' ? '← Spam' : email.ai === 'unsub' ? '↑ Unsubscribe' : '? Review';
   card.innerHTML = `
     <div class="ai-badge ${email.ai}-ai"><div class="dot"></div>${badgeLabel} · AI Suggestion</div>
     <div class="sender-row">
