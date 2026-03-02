@@ -776,7 +776,13 @@ window.doAction = function(action, animate=true) {
     }
   }
   current++;
-  setTimeout(()=>{ if(current>=EMAILS.length) showDone(); else renderCards(); }, 400);
+  setTimeout(()=>{
+    while (current < EMAILS.length && processedSet.has(current)) current++;
+    if (processedSet.size >= EMAILS.length) { showDone(); return; }
+    if (current >= EMAILS.length) { returnToQueue = false; openQueueOverlay(); return; }
+    renderCards();
+    if (returnToQueue) { returnToQueue = false; openQueueOverlay(); }
+  }, 400);
 };
 
 // ── UNDO ───────────────────────────────────────────────────────────────────
