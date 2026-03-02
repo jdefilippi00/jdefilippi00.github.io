@@ -591,6 +591,7 @@ const counts = { keep:0, spam:0, unsub:0, kunread:0, del:0 };
 const sessionActivity = []; // actions taken this session
 const undoStack = [];
 const MAX_UNDO = 5;
+const processedSet = new Set(); // tracks every email index that has been acted on
 let trainingMode = true;
 let countdown = 30;
 let panelTab = 'activity';
@@ -726,13 +727,25 @@ window.doAction = function(action, animate=true) {
   if (action === null) {
     current++;
     setTimeout(()=>{
-      if (current>=EMAILS.length) { showDone(); return; }
+      // Skip over any already-processed cards in the sequential flow
+      while (current < EMAILS.length && processedSet.has(current)) current++;
+      // All done?
+      if (processedSet.size >= EMAILS.length) { showDone(); return; }
+      // Ran off the end but unprocessed emails exist earlier — reopen queue
+      if (current >= EMAILS.length) {
+        returnToQueue = false;
+        openQueueOverlay();
+        return;
+      }
       renderCards();
       if (returnToQueue) { returnToQueue = false; openQueueOverlay(); }
     }, 400);
     return;
   }
   if (current>=EMAILS.length) return;
+
+  // Mark as processed
+  processedSet.add(current);
 
   // Undo stack
   undoStack.push({ action, cardIdx:current });
@@ -776,6 +789,7 @@ function updateUndoBtn() {
 function undoAction() {
   if (undoStack.length===0) return;
   const { action, cardIdx } = undoStack.pop();
+  processedSet.delete(cardIdx);
   counts[action]--;
   const statEl = document.getElementById('s-'+action);
   if (statEl) statEl.textContent = counts[action];
@@ -869,7 +883,7 @@ function buildQueueOverlay() {
   const actedSet = new Set();
   undoStack.forEach(u => actedSet.add(u.cardIdx)); // rough indicator — emails before current have been acted
   EMAILS.forEach((email, i) => {
-    const acted = i < current;
+    const acted = processedSet.has(i);
     const isCurrent = i === current;
     const item = document.createElement('div');
     item.className = 'q-item' + (acted ? ' acted' : '');
@@ -890,7 +904,7 @@ function buildQueueOverlay() {
     `;
     list.appendChild(item);
   });
-  const remaining = EMAILS.length - current;
+  const remaining = EMAILS.length - processedSet.size;
   document.getElementById('queue-overlay-title').textContent = `All Emails (${remaining} pending)`;
 }
 
@@ -901,7 +915,7 @@ function updateCounter() {
   else el.textContent = '';
 }
 function updateQueueCount() {
-  document.getElementById('queue-count').textContent = Math.max(0, EMAILS.length - current);
+  document.getElementById('queue-count').textContent = Math.max(0, EMAILS.length - processedSet.size);
 }
 
 function showToast(msg, action) {
@@ -928,6 +942,7 @@ function restart() {
   Object.keys(counts).forEach(k=>{ counts[k]=0; const el=document.getElementById('s-'+k); if(el) el.textContent=0; });
   undoStack.length = 0;
   sessionActivity.length = 0;
+  processedSet.clear();
   updateUndoBtn();
   document.getElementById('done-screen').style.display='none';
   renderCards();
