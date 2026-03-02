@@ -594,6 +594,7 @@ const MAX_UNDO = 5;
 let trainingMode = true;
 let countdown = 30;
 let panelTab = 'activity';
+let returnToQueue = false;
 
 // ── MEASURE LAYOUT ─────────────────────────────────────────────────────────
 function measureLayout() {
@@ -629,7 +630,7 @@ function makeCard(email, isActive) {
   const card = document.createElement('div');
   card.className = 'card' + (isActive ? ' active' : '');
   const color = confColor(email.ai);
-  const badgeLabel = email.ai === 'keep' ? '→ Keep Read' : email.ai === 'spam' ? '← Spam' : email.ai === 'unsub' ? '↑ Unsubscribe' : '? Review';
+  const badgeLabel = email.ai === 'keep' ? '→ Keep Read' : email.ai === 'spam' ? '← Spam' : email.ai === 'unsub' ? '↑ Unsubscribe' : '↓ Keep Unread · Low Confidence';
   card.innerHTML = `
     <div class="ai-badge ${email.ai}-ai"><div class="dot"></div>${badgeLabel} · AI Suggestion</div>
     <div class="sender-row">
@@ -724,7 +725,11 @@ const actionColors = { keep:'#22c55e', spam:'#ef4444', unsub:'#3b82f6', kunread:
 window.doAction = function(action, animate=true) {
   if (action === null) {
     current++;
-    setTimeout(()=>{ if(current>=EMAILS.length) showDone(); else renderCards(); }, 400);
+    setTimeout(()=>{
+      if (current>=EMAILS.length) { showDone(); return; }
+      renderCards();
+      if (returnToQueue) { returnToQueue = false; openQueueOverlay(); }
+    }, 400);
     return;
   }
   if (current>=EMAILS.length) return;
@@ -852,6 +857,12 @@ function openQueueOverlay() {
 function closeQueueOverlay() {
   document.getElementById('queue-overlay').classList.remove('open');
 }
+function jumpToCard(idx) {
+  closeQueueOverlay();
+  current = idx;
+  returnToQueue = true;
+  renderCards();
+}
 function buildQueueOverlay() {
   const list = document.getElementById('queue-overlay-list');
   list.innerHTML = '';
@@ -863,7 +874,11 @@ function buildQueueOverlay() {
     const item = document.createElement('div');
     item.className = 'q-item' + (acted ? ' acted' : '');
     const actedAction = acted ? (sessionActivity[current - 1 - i] || null) : null;
-    const statusIcon = isCurrent ? '👆' : acted && actedAction ? actedAction.icon : acted ? '✓' : '';
+    const statusIcon = isCurrent ? '👆' : acted && actedAction ? actedAction.icon : acted ? '✓' : '›';
+    if (!acted) {
+      item.style.cursor = 'pointer';
+      item.addEventListener('click', () => jumpToCard(i));
+    }
     item.innerHTML = `
       <div class="q-avatar" style="background:${email.avatarBg}">${email.avatar}</div>
       <div class="q-info">
@@ -871,7 +886,7 @@ function buildQueueOverlay() {
         <div class="q-subj">${email.subject}</div>
       </div>
       <div class="q-badge ${email.ai}-ai">${email.ai==='keep'?'Keep':email.ai==='spam'?'Spam':email.ai==='unsub'?'Unsub':'Review'}</div>
-      <div class="q-status">${statusIcon}</div>
+      <div class="q-status" style="${!acted?'color:var(--muted)':''}">${statusIcon}</div>
     `;
     list.appendChild(item);
   });
