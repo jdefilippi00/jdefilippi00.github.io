@@ -595,7 +595,7 @@ const processedSet = new Set(); // tracks every email index that has been acted 
 let trainingMode = true;
 let countdown = 30;
 let panelTab = 'activity';
-let returnToQueue = false;
+// returnToQueue removed — advance logic now wraps around automatically
 
 // ── MEASURE LAYOUT ─────────────────────────────────────────────────────────
 function measureLayout() {
@@ -727,18 +727,15 @@ window.doAction = function(action, animate=true) {
   if (action === null) {
     current++;
     setTimeout(()=>{
-      // Skip over any already-processed cards in the sequential flow
-      while (current < EMAILS.length && processedSet.has(current)) current++;
-      // All done?
       if (processedSet.size >= EMAILS.length) { showDone(); return; }
-      // Ran off the end but unprocessed emails exist earlier — reopen queue
+      // Advance forward, skipping processed cards
+      while (current < EMAILS.length && processedSet.has(current)) current++;
+      // Wrap around to beginning if we hit the end
       if (current >= EMAILS.length) {
-        returnToQueue = false;
-        openQueueOverlay();
-        return;
+        current = 0;
+        while (current < EMAILS.length && processedSet.has(current)) current++;
       }
       renderCards();
-      if (returnToQueue) { returnToQueue = false; openQueueOverlay(); }
     }, 400);
     return;
   }
@@ -777,11 +774,13 @@ window.doAction = function(action, animate=true) {
   }
   current++;
   setTimeout(()=>{
-    while (current < EMAILS.length && processedSet.has(current)) current++;
     if (processedSet.size >= EMAILS.length) { showDone(); return; }
-    if (current >= EMAILS.length) { returnToQueue = false; openQueueOverlay(); return; }
+    while (current < EMAILS.length && processedSet.has(current)) current++;
+    if (current >= EMAILS.length) {
+      current = 0;
+      while (current < EMAILS.length && processedSet.has(current)) current++;
+    }
     renderCards();
-    if (returnToQueue) { returnToQueue = false; openQueueOverlay(); }
   }, 400);
 };
 
@@ -880,7 +879,6 @@ function closeQueueOverlay() {
 function jumpToCard(idx) {
   closeQueueOverlay();
   current = idx;
-  returnToQueue = true;
   renderCards();
 }
 function buildQueueOverlay() {
