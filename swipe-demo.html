@@ -8,16 +8,17 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --keep:   #22c55e;
-      --spam:   #ef4444;
-      --unsub:  #3b82f6;
+      --keep:    #22c55e;
+      --spam:    #ef4444;
+      --unsub:   #3b82f6;
       --kunread: #a78bfa;
-      --bg:     #0f172a;
-      --card:   #1e293b;
-      --border: #334155;
-      --text:   #f1f5f9;
-      --muted:  #94a3b8;
-      --radius: 18px;
+      --del:     #f97316;
+      --bg:      #0f172a;
+      --card:    #1e293b;
+      --border:  #334155;
+      --text:    #f1f5f9;
+      --muted:   #94a3b8;
+      --radius:  18px;
     }
 
     html, body {
@@ -30,29 +31,77 @@
 
     /* ── TOP BAR ── */
     #topbar {
-      position: fixed; top: 0; left: 0; right: 0;
-      padding: env(safe-area-inset-top, 16px) 20px 12px;
-      background: var(--bg);
-      display: flex; align-items: center; justify-content: space-between;
-      z-index: 100;
-      border-bottom: 1px solid var(--border);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--bg); border-bottom: 1px solid var(--border);
     }
-    #topbar .logo { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-    #topbar .logo span { color: #60a5fa; }
-    #topbar .stats { display: flex; gap: 14px; }
-    #topbar .stat { text-align: center; }
-    #topbar .stat .n { font-size: 16px; font-weight: 700; }
-    #topbar .stat .l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    #topbar .stat.keep .n { color: var(--keep); }
-    #topbar .stat.spam .n { color: var(--spam); }
-    #topbar .stat.unsub .n { color: var(--unsub); }
-    #topbar .stat.kunread .n { color: var(--kunread); }
+    #topbar-row1 {
+      padding: env(safe-area-inset-top, 14px) 14px 8px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .logo { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; flex-shrink: 0; }
+    .logo span { color: #60a5fa; }
+    .mode-badge {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+      background: rgba(251,191,36,0.15); color: #fbbf24;
+      padding: 3px 8px; border-radius: 20px; border: 1px solid rgba(251,191,36,0.3);
+      flex-shrink: 0;
+    }
+    .mode-badge.auto { background: rgba(34,197,94,0.15); color: #4ade80; border-color: rgba(34,197,94,0.3); }
+    #topbar-right { display: flex; align-items: center; gap: 6px; }
+
+    /* Undo btn */
+    #undo-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 1px;
+      border: none; background: none; cursor: pointer;
+      padding: 4px 8px; border-radius: 10px;
+      transition: background 0.15s, opacity 0.15s; position: relative;
+    }
+    #undo-btn:disabled { opacity: 0.22; cursor: default; }
+    #undo-btn:not(:disabled):active { background: rgba(96,165,250,0.12); }
+    #undo-btn .icon { font-size: 18px; }
+    #undo-btn .label { font-size: 9px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.4px; color: #60a5fa; }
+    #undo-btn:disabled .label { color: var(--muted); }
+    #undo-badge {
+      position: absolute; top: 1px; right: 2px;
+      background: #3b82f6; color: white; border-radius: 8px;
+      font-size: 8px; font-weight: 700; padding: 1px 3px; min-width: 13px;
+      text-align: center; display: none;
+    }
+    #undo-btn:not(:disabled) #undo-badge { display: block; }
+
+    /* Menu btn */
+    #menu-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 1px;
+      border: none; background: none; cursor: pointer;
+      padding: 4px 8px; border-radius: 10px;
+      color: var(--muted); transition: background 0.15s, color 0.15s;
+    }
+    #menu-btn:active { background: rgba(255,255,255,0.06); color: var(--text); }
+    #menu-btn .icon { font-size: 18px; }
+    #menu-btn .label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+
+    /* Stats row */
+    #topbar-stats {
+      display: flex; padding: 0 0 8px; gap: 0;
+    }
+    #topbar-stats .stat {
+      flex: 1; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    #topbar-stats .stat:last-child { border-right: none; }
+    #topbar-stats .stat .n { font-size: 15px; font-weight: 700; }
+    #topbar-stats .stat .l { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    #topbar-stats .stat.keep .n   { color: var(--keep); }
+    #topbar-stats .stat.spam .n   { color: var(--spam); }
+    #topbar-stats .stat.unsub .n  { color: var(--unsub); }
+    #topbar-stats .stat.del .n    { color: var(--del); }
 
     /* ── CARD ARENA ── */
     #arena {
       position: fixed;
-      top: calc(env(safe-area-inset-top, 16px) + 62px);
-      bottom: calc(env(safe-area-inset-bottom, 16px) + 100px);
+      top: var(--topbar-h, 110px);
+      bottom: var(--bottom-h, 136px);
       left: 0; right: 0;
       display: flex; align-items: center; justify-content: center;
     }
@@ -64,7 +113,7 @@
       background: var(--card);
       border-radius: var(--radius);
       border: 1px solid var(--border);
-      padding: 22px;
+      padding: 20px;
       user-select: none;
       transition: transform 0.08s ease, box-shadow 0.08s ease;
       will-change: transform;
@@ -76,136 +125,268 @@
     .card.active:active { cursor: grabbing; }
     .card.animating { transition: transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.35s ease; }
 
-    /* AI badge */
     .ai-badge {
       display: inline-flex; align-items: center; gap: 5px;
-      font-size: 11px; font-weight: 600;
-      padding: 3px 9px; border-radius: 20px; margin-bottom: 14px;
+      font-size: 10px; font-weight: 600;
+      padding: 2px 8px; border-radius: 20px; margin-bottom: 12px;
       text-transform: uppercase; letter-spacing: 0.5px;
     }
     .ai-badge.spam-ai   { background: rgba(239,68,68,0.15);  color: #f87171; }
     .ai-badge.unsub-ai  { background: rgba(59,130,246,0.15); color: #60a5fa; }
     .ai-badge.keep-ai   { background: rgba(34,197,94,0.15);  color: #4ade80; }
     .ai-badge.review-ai { background: rgba(251,191,36,0.15); color: #fbbf24; }
-    .ai-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .ai-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
-    /* Sender row */
-    .sender-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .sender-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
     .avatar {
-      width: 44px; height: 44px; border-radius: 50%;
+      width: 40px; height: 40px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px; font-weight: 700; flex-shrink: 0;
+      font-size: 17px; font-weight: 700; flex-shrink: 0;
     }
     .sender-info { flex: 1; min-width: 0; }
-    .sender-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sender-email { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .sender-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sender-email { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
     .time-badge { font-size: 11px; color: var(--muted); flex-shrink: 0; }
 
-    /* Subject */
-    .subject {
-      font-size: 16px; font-weight: 600; line-height: 1.35;
-      margin-bottom: 10px; color: var(--text);
-    }
-
-    /* Preview */
+    .subject { font-size: 15px; font-weight: 600; line-height: 1.35; margin-bottom: 8px; }
     .preview {
-      font-size: 13.5px; color: var(--muted); line-height: 1.55;
-      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
-      overflow: hidden; margin-bottom: 16px;
+      font-size: 12.5px; color: var(--muted); line-height: 1.5;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; margin-bottom: 14px;
     }
 
-    /* Confidence bar */
-    .conf-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-    .conf-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .conf-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .conf-label { font-size: 10px; color: var(--muted); white-space: nowrap; }
     .conf-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-    .conf-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
-    .conf-pct { font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .conf-fill { height: 100%; border-radius: 2px; }
+    .conf-pct { font-size: 10px; font-weight: 600; white-space: nowrap; }
 
-    /* Tag pills */
-    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag {
-      font-size: 11px; padding: 3px 9px; border-radius: 20px;
-      background: rgba(255,255,255,0.07); color: var(--muted);
-    }
+    .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: rgba(255,255,255,0.07); color: var(--muted); }
 
-    /* ── ACTION OVERLAYS ── */
+    /* ── OVERLAYS ── */
     .overlay {
       position: absolute; inset: 0; border-radius: var(--radius);
       display: flex; align-items: center; justify-content: center;
       flex-direction: column; gap: 8px;
       opacity: 0; pointer-events: none; z-index: 20;
-      font-size: 28px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+      font-size: 26px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
       transition: opacity 0.1s;
     }
-    .overlay .icon { font-size: 52px; }
-    .overlay.keep-ov  { background: rgba(34,197,94,0.25);  color: var(--keep);  border: 3px solid var(--keep);  border-radius: var(--radius); }
-    .overlay.spam-ov  { background: rgba(239,68,68,0.25);  color: var(--spam);  border: 3px solid var(--spam);  border-radius: var(--radius); }
-    .overlay.unsub-ov { background: rgba(59,130,246,0.25); color: var(--unsub); border: 3px solid var(--unsub); border-radius: var(--radius); }
+    .overlay .icon { font-size: 48px; }
+    .overlay.keep-ov    { background: rgba(34,197,94,0.25);  color: var(--keep);    border: 3px solid var(--keep);    border-radius: var(--radius); }
+    .overlay.spam-ov    { background: rgba(239,68,68,0.25);  color: var(--spam);    border: 3px solid var(--spam);    border-radius: var(--radius); }
+    .overlay.unsub-ov   { background: rgba(59,130,246,0.25); color: var(--unsub);   border: 3px solid var(--unsub);   border-radius: var(--radius); }
     .overlay.kunread-ov { background: rgba(167,139,250,0.15);color: var(--kunread); border: 3px solid var(--kunread); border-radius: var(--radius); }
 
     /* ── HINT ARROWS ── */
     #hints {
       position: fixed; top: 50%; transform: translateY(-50%);
       left: 0; right: 0; pointer-events: none; z-index: 5;
-      display: flex; justify-content: space-between; padding: 0 6px;
+      display: flex; justify-content: space-between; padding: 0 4px;
     }
     .hint {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
-      opacity: 0.25; transition: opacity 0.2s;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+      opacity: 0.22; transition: opacity 0.2s;
     }
-    .hint .arrow { font-size: 22px; }
-    .hint.left  .arrow { color: var(--spam); }
-    .hint.right .arrow { color: var(--keep); }
-    .hint.left  { color: var(--spam); }
-    .hint.right { color: var(--keep); }
-
+    .hint .arrow { font-size: 20px; }
+    .hint.left  { color: var(--spam);  }
+    .hint.right { color: var(--keep);  }
     #hint-top {
-      position: fixed; top: calc(env(safe-area-inset-top,16px) + 70px);
+      position: fixed; top: calc(var(--topbar-h, 110px) + 8px);
       left: 50%; transform: translateX(-50%);
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      font-size: 10px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.4px; color: var(--unsub); opacity: 0.25;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      font-size: 9px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.4px; color: var(--unsub); opacity: 0.22;
       pointer-events: none; z-index: 5;
     }
-    #hint-top .arrow { font-size: 22px; }
-
+    #hint-top .arrow { font-size: 20px; }
     #hint-bottom {
-      position: fixed; bottom: calc(env(safe-area-inset-bottom,16px) + 110px);
+      position: fixed; bottom: calc(var(--bottom-h, 136px) + 8px);
       left: 50%; transform: translateX(-50%);
-      display: flex; flex-direction: column-reverse; align-items: center; gap: 4px;
-      font-size: 10px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.4px; color: var(--kunread); opacity: 0.25;
+      display: flex; flex-direction: column-reverse; align-items: center; gap: 3px;
+      font-size: 9px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.4px; color: var(--kunread); opacity: 0.22;
       pointer-events: none; z-index: 5;
     }
-    #hint-bottom .arrow { font-size: 22px; }
+    #hint-bottom .arrow { font-size: 20px; }
 
-    /* ── BOTTOM BAR ── */
+    /* ── STATUS BAR (above bottom bar) ── */
+    #statusbar {
+      position: fixed; bottom: var(--actionbar-h, 80px); left: 0; right: 0;
+      padding: 7px 14px;
+      background: var(--bg); border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; z-index: 100;
+    }
+    .status-left { display: flex; align-items: center; gap: 7px; }
+    .refresh-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--keep); animation: pulse 2s infinite; flex-shrink: 0; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .refresh-text { font-size: 12px; color: var(--muted); }
+    .refresh-text strong { color: var(--text); }
+    .status-right { display: flex; align-items: center; gap: 6px; }
+    .run-btn {
+      font-size: 12px; font-weight: 600; color: #60a5fa;
+      background: rgba(59,130,246,0.1); border: none; border-radius: 7px;
+      padding: 5px 10px; cursor: pointer;
+    }
+    .queue-btn {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      background: rgba(255,255,255,0.05); border: none; border-radius: 7px;
+      padding: 5px 10px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+    }
+    .queue-btn:active { background: rgba(255,255,255,0.1); }
+
+    /* ── BOTTOM ACTION BAR ── */
     #bottombar {
       position: fixed; bottom: 0; left: 0; right: 0;
-      padding: 14px 20px env(safe-area-inset-bottom, 16px);
+      padding: 8px 6px env(safe-area-inset-bottom, 10px);
       background: var(--bg); border-top: 1px solid var(--border);
       display: flex; justify-content: space-around; align-items: center; z-index: 100;
     }
     .action-btn {
-      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
       border: none; background: none; cursor: pointer;
-      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
-      padding: 8px 14px; border-radius: 12px; transition: background 0.15s, transform 0.1s;
+      font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+      padding: 6px 8px; border-radius: 12px; transition: background 0.15s, transform 0.1s;
+      flex: 1;
     }
-    .action-btn:active { transform: scale(0.92); }
-    .action-btn .icon { font-size: 26px; }
-    .action-btn.spam  { color: var(--spam);  } .action-btn.spam:active  { background: rgba(239,68,68,0.1); }
-    .action-btn.unsub { color: var(--unsub); } .action-btn.unsub:active { background: rgba(59,130,246,0.1); }
-    .action-btn.keep  { color: var(--keep);  } .action-btn.keep:active  { background: rgba(34,197,94,0.1); }
+    .action-btn:active { transform: scale(0.90); }
+    .action-btn .icon { font-size: 22px; }
+    .action-btn.del     { color: var(--del);     } .action-btn.del:active     { background: rgba(249,115,22,0.1); }
+    .action-btn.spam    { color: var(--spam);    } .action-btn.spam:active    { background: rgba(239,68,68,0.1); }
+    .action-btn.unsub   { color: var(--unsub);   } .action-btn.unsub:active   { background: rgba(59,130,246,0.1); }
+    .action-btn.keep    { color: var(--keep);    } .action-btn.keep:active    { background: rgba(34,197,94,0.1); }
     .action-btn.kunread { color: var(--kunread); } .action-btn.kunread:active { background: rgba(167,139,250,0.1); }
 
-    /* counter */
+    /* card counter */
     #counter {
-      position: fixed; bottom: calc(env(safe-area-inset-bottom,16px) + 102px);
+      position: fixed; bottom: calc(var(--bottom-h, 136px) + 34px);
       left: 50%; transform: translateX(-50%);
-      font-size: 12px; color: var(--muted); z-index: 101;
+      font-size: 11px; color: var(--muted); z-index: 101;
+      pointer-events: none;
     }
+
+    /* ── SLIDE-UP PANEL ── */
+    #backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      z-index: 200; display: none; opacity: 0; transition: opacity 0.25s;
+    }
+    #backdrop.open { display: block; opacity: 1; }
+    #panel {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 72%; background: #0f172a;
+      border-top: 1px solid var(--border); border-radius: 20px 20px 0 0;
+      z-index: 201; transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.34,1.1,0.64,1);
+      display: flex; flex-direction: column;
+    }
+    #panel.open { transform: translateY(0); }
+    .panel-handle {
+      width: 36px; height: 4px; background: var(--border); border-radius: 2px;
+      margin: 10px auto 0;
+    }
+    .panel-tabs {
+      display: flex; border-bottom: 1px solid var(--border); margin: 8px 0 0; flex-shrink: 0;
+    }
+    .panel-tab {
+      flex: 1; text-align: center; padding: 10px 0;
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      border-bottom: 2px solid transparent; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .panel-tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+    .panel-body { flex: 1; overflow-y: auto; }
+
+    /* Activity feed (inside panel) */
+    .activity-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .act-icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+    .act-info { flex: 1; min-width: 0; }
+    .act-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .act-subj { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .act-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+    /* Options (inside panel) */
+    #options-panel { padding: 16px; }
+    .options-section { margin-bottom: 24px; }
+    .options-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--muted); margin-bottom: 12px;
+    }
+    .option-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; background: var(--card); border-radius: 12px;
+      margin-bottom: 8px; border: 1px solid var(--border);
+    }
+    .option-label { font-size: 14px; font-weight: 500; }
+    .option-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    /* Toggle switch */
+    .toggle {
+      width: 44px; height: 26px; border-radius: 13px;
+      background: var(--border); position: relative; cursor: pointer;
+      transition: background 0.2s; flex-shrink: 0;
+    }
+    .toggle.on { background: #fbbf24; }
+    .toggle::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 20px; height: 20px; border-radius: 50%; background: white;
+      transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .toggle.on::after { transform: translateX(18px); }
+    .stub-btn {
+      width: 100%; padding: 12px 14px; background: var(--card);
+      border: 1px solid var(--border); border-radius: 12px; color: var(--text);
+      font-size: 14px; font-weight: 500; cursor: pointer; text-align: left;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .stub-btn .chevron { color: var(--muted); }
+
+    /* ── QUEUE OVERLAY ── */
+    #queue-overlay {
+      position: fixed; inset: 0; background: var(--bg);
+      z-index: 300; display: none; flex-direction: column;
+    }
+    #queue-overlay.open { display: flex; }
+    #queue-overlay-header {
+      padding: env(safe-area-inset-top, 16px) 16px 0;
+      background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    #queue-overlay-title-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 10px;
+    }
+    #queue-overlay-title { font-size: 16px; font-weight: 700; }
+    #close-queue-btn {
+      font-size: 13px; font-weight: 600; color: #60a5fa;
+      background: rgba(59,130,246,0.1); border: none; border-radius: 8px;
+      padding: 6px 14px; cursor: pointer;
+    }
+    #queue-overlay-list { flex: 1; overflow-y: auto; padding-bottom: 20px; }
+    .q-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .q-item.acted { opacity: 0.35; }
+    .q-avatar {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .q-info { flex: 1; min-width: 0; }
+    .q-from { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .q-subj { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .q-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0;
+    }
+    .q-badge.keep-ai   { background: rgba(34,197,94,0.15);  color: #4ade80; }
+    .q-badge.spam-ai   { background: rgba(239,68,68,0.15);  color: #f87171; }
+    .q-badge.unsub-ai  { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .q-badge.review-ai { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .q-status { font-size: 18px; flex-shrink: 0; }
 
     /* ── DONE SCREEN ── */
     #done-screen {
@@ -213,59 +394,31 @@
       display: none; flex-direction: column; align-items: center; justify-content: center;
       padding: 32px; text-align: center; z-index: 200;
     }
-    #done-screen .trophy { font-size: 64px; margin-bottom: 20px; }
-    #done-screen h2 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
-    #done-screen p { color: var(--muted); font-size: 15px; margin-bottom: 32px; line-height: 1.6; }
-    .done-stats {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-      width: 100%; max-width: 320px; margin-bottom: 36px;
-    }
-    .done-stat {
-      background: var(--card); border-radius: 14px; padding: 16px;
-      border: 1px solid var(--border);
-    }
-    .done-stat .n { font-size: 32px; font-weight: 800; }
-    .done-stat .l { font-size: 12px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
-    .done-stat.keep  .n { color: var(--keep); }
-    .done-stat.spam  .n { color: var(--spam); }
-    .done-stat.unsub .n { color: var(--unsub); }
+    #done-screen .trophy { font-size: 60px; margin-bottom: 18px; }
+    #done-screen h2 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    #done-screen p { color: var(--muted); font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
+    .done-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 320px; margin-bottom: 28px; }
+    .done-stat { background: var(--card); border-radius: 14px; padding: 14px; border: 1px solid var(--border); }
+    .done-stat .n { font-size: 28px; font-weight: 800; }
+    .done-stat .l { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+    .done-stat.keep    .n { color: var(--keep); }
+    .done-stat.spam    .n { color: var(--spam); }
+    .done-stat.unsub   .n { color: var(--unsub); }
     .done-stat.kunread .n { color: var(--kunread); }
+    .done-stat.del     .n { color: var(--del); }
     #restart-btn {
       background: #3b82f6; color: white; border: none;
-      padding: 14px 40px; border-radius: 14px; font-size: 16px; font-weight: 600;
-      cursor: pointer;
+      padding: 14px 40px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer;
     }
-
-    /* ── UNDO BUTTON ── */
-    #undo-btn {
-      display: flex; flex-direction: column; align-items: center; gap: 2px;
-      border: none; background: none; cursor: pointer;
-      padding: 4px 10px; border-radius: 10px;
-      transition: background 0.15s, opacity 0.15s;
-      position: relative;
-    }
-    #undo-btn:disabled { opacity: 0.25; cursor: default; }
-    #undo-btn:not(:disabled):active { background: rgba(96,165,250,0.12); }
-    #undo-btn .icon { font-size: 20px; }
-    #undo-btn .label { font-size: 10px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.4px; color: #60a5fa; }
-    #undo-btn:disabled .label { color: var(--muted); }
-    #undo-badge {
-      position: absolute; top: 2px; right: 4px;
-      background: #3b82f6; color: white; border-radius: 8px;
-      font-size: 9px; font-weight: 700; padding: 1px 4px; min-width: 14px;
-      text-align: center; display: none;
-    }
-    #undo-btn:not(:disabled) #undo-badge { display: block; }
 
     /* ── TOAST ── */
     #toast {
-      position: fixed; top: calc(env(safe-area-inset-top,16px) + 70px);
+      position: fixed; top: calc(var(--topbar-h, 110px) + 8px);
       left: 50%; transform: translateX(-50%) translateY(-20px);
       background: #1e293b; border: 1px solid var(--border);
-      padding: 10px 20px; border-radius: 30px;
+      padding: 9px 18px; border-radius: 30px;
       font-size: 13px; font-weight: 600; white-space: nowrap;
-      opacity: 0; transition: opacity 0.2s, transform 0.2s; z-index: 300;
+      opacity: 0; transition: opacity 0.2s, transform 0.2s; z-index: 500;
       pointer-events: none;
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -275,17 +428,26 @@
 
 <!-- TOP BAR -->
 <div id="topbar">
-  <div class="logo">em<span>AI</span>l Agent</div>
-  <button id="undo-btn" disabled onclick="undoAction()">
-    <div class="icon">↩</div>
-    <div class="label">Undo</div>
-    <div id="undo-badge">0</div>
-  </button>
-  <div class="stats">
-    <div class="stat keep"><div class="n" id="s-keep">0</div><div class="l">Keep</div></div>
-    <div class="stat spam"><div class="n" id="s-spam">0</div><div class="l">Spam</div></div>
-    <div class="stat unsub"><div class="n" id="s-unsub">0</div><div class="l">Unsub</div></div>
-    <div class="stat kunread"><div class="n" id="s-kunread">0</div><div class="l">Unread</div></div>
+  <div id="topbar-row1">
+    <div class="logo">em<span>AI</span>l Agent</div>
+    <div id="mode-badge" class="mode-badge">⚙️ Training</div>
+    <div id="topbar-right">
+      <button id="undo-btn" disabled onclick="undoAction()">
+        <div class="icon">↩</div>
+        <div class="label">Undo</div>
+        <div id="undo-badge">0</div>
+      </button>
+      <button id="menu-btn" onclick="openPanel('activity')">
+        <div class="icon">☰</div>
+        <div class="label">Menu</div>
+      </button>
+    </div>
+  </div>
+  <div id="topbar-stats">
+    <div class="stat keep"><div class="n" id="s-keep">0</div><div class="l">Keep ✅</div></div>
+    <div class="stat spam"><div class="n" id="s-spam">0</div><div class="l">Spam 🚫</div></div>
+    <div class="stat unsub"><div class="n" id="s-unsub">0</div><div class="l">Unsub 📧</div></div>
+    <div class="stat del"><div class="n" id="s-del">0</div><div class="l">Delete 🗑️</div></div>
   </div>
 </div>
 
@@ -300,15 +462,82 @@
 <!-- CARD ARENA -->
 <div id="arena"></div>
 
-<!-- COUNTER -->
+<!-- CARD COUNTER -->
 <div id="counter"></div>
 
-<!-- BOTTOM BAR -->
+<!-- STATUS BAR -->
+<div id="statusbar">
+  <div class="status-left">
+    <div class="refresh-dot"></div>
+    <div class="refresh-text">Refresh in <strong id="countdown">30</strong>s</div>
+  </div>
+  <div class="status-right">
+    <button class="run-btn" onclick="showToast('▶ Running agent…','info')">▶ Run Now</button>
+    <button class="queue-btn" onclick="openQueueOverlay()">≡ <span id="queue-count">10</span></button>
+  </div>
+</div>
+
+<!-- BOTTOM ACTION BAR -->
 <div id="bottombar">
+  <button class="action-btn del"     onclick="doAction('del')"><div class="icon">🗑️</div>Delete</button>
   <button class="action-btn spam"    onclick="doAction('spam')"><div class="icon">🚫</div>Spam</button>
   <button class="action-btn unsub"   onclick="doAction('unsub')"><div class="icon">📧</div>Unsub</button>
   <button class="action-btn keep"    onclick="doAction('keep')"><div class="icon">✅</div>Keep Read</button>
-  <button class="action-btn kunread" onclick="doAction('kunread')"><div class="icon">📌</div>Keep Unread</button>
+  <button class="action-btn kunread" onclick="doAction('kunread')"><div class="icon">📌</div>Unread</button>
+</div>
+
+<!-- SLIDE-UP PANEL (Activity + Options) -->
+<div id="backdrop" onclick="closePanel()"></div>
+<div id="panel">
+  <div class="panel-handle"></div>
+  <div class="panel-tabs">
+    <div class="panel-tab active" id="tab-activity" onclick="switchPanelTab('activity')">Recent Activity</div>
+    <div class="panel-tab" id="tab-options" onclick="switchPanelTab('options')">Options</div>
+  </div>
+  <div class="panel-body">
+    <div id="activity-panel"></div>
+    <div id="options-panel" style="display:none">
+      <div class="options-section">
+        <div class="options-title">Agent Mode</div>
+        <div class="option-row">
+          <div>
+            <div class="option-label">Training Mode</div>
+            <div class="option-sub">You approve every decision</div>
+          </div>
+          <div class="toggle on" id="mode-toggle" onclick="toggleMode()"></div>
+        </div>
+      </div>
+      <div class="options-section">
+        <div class="options-title">Sender Rules</div>
+        <button class="stub-btn" onclick="showToast('Coming in Phase 4 🔜','info')">
+          <span>🛡 Trusted Senders</span><span class="chevron">›</span>
+        </button>
+        <button class="stub-btn" onclick="showToast('Coming in Phase 4 🔜','info')">
+          <span>🚫 Blocked Senders</span><span class="chevron">›</span>
+        </button>
+        <button class="stub-btn" onclick="showToast('Coming in Phase 4 🔜','info')">
+          <span>💡 What I've Learned</span><span class="chevron">›</span>
+        </button>
+      </div>
+      <div class="options-section">
+        <div class="options-title">Email Account</div>
+        <button class="stub-btn" onclick="showToast('Coming in Phase 1 🔜','info')">
+          <span>📬 james@gmail.com</span><span class="chevron">›</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUEUE OVERLAY -->
+<div id="queue-overlay">
+  <div id="queue-overlay-header">
+    <div id="queue-overlay-title-row">
+      <div id="queue-overlay-title">All Emails</div>
+      <button id="close-queue-btn" onclick="closeQueueOverlay()">✕ Close</button>
+    </div>
+  </div>
+  <div id="queue-overlay-list"></div>
 </div>
 
 <!-- DONE SCREEN -->
@@ -321,6 +550,7 @@
     <div class="done-stat spam"><div class="n" id="d-spam">0</div><div class="l">🚫 Spammed</div></div>
     <div class="done-stat unsub"><div class="n" id="d-unsub">0</div><div class="l">📧 Unsubbed</div></div>
     <div class="done-stat kunread"><div class="n" id="d-kunread">0</div><div class="l">📌 Kept Unread</div></div>
+    <div class="done-stat del"><div class="n" id="d-del">0</div><div class="l">🗑️ Deleted</div></div>
   </div>
   <button id="restart-btn" onclick="restart()">Try Again</button>
 </div>
@@ -329,123 +559,50 @@
 <div id="toast"></div>
 
 <script>
-// ── MOCK EMAIL DATA (based on James's real Pi usage) ──────────────────────
+// ── MOCK EMAIL DATA ────────────────────────────────────────────────────────
 const EMAILS = [
-  {
-    from: "USPS Informed Delivery",
-    email: "informed@email.informeddelivery.usps.com",
-    subject: "Your Informed Delivery Daily Digest",
-    preview: "3 pieces of mail and 2 packages are scheduled for delivery today. Tap to see images of your incoming mail.",
-    time: "6:02 AM",
-    avatar: "📬", avatarBg: "#1e40af",
-    ai: "keep", confidence: 97,
-    tags: ["Trusted", "USPS", "Delivery"],
-    suggested: "Keep — Trusted sender (USPS)"
-  },
-  {
-    from: "ENVE Composites",
-    email: "no.reply@enve.com",
-    subject: "Mick Schumacher Takes ENVE to the INDYCAR Stage 🏎️",
-    preview: "The future of racing is here. Mick Schumacher and the ENVE team push the limits of carbon fiber technology at this weekend's INDYCAR race. Shop the collection.",
-    time: "7:14 AM",
-    avatar: "🚴", avatarBg: "#7c3aed",
-    ai: "unsub", confidence: 82,
-    tags: ["Marketing", "Cycling", "Newsletter"],
-    suggested: "Unsubscribe — Marketing email"
-  },
-  {
-    from: "Strava",
-    email: "no-reply@strava.com",
-    subject: "Weekly Training Summary — you crushed it! 💪",
-    preview: "This week: 3 activities, 47.2 miles, 2,840 ft elevation gain. You're in the top 15% of athletes in your area. View your full breakdown.",
-    time: "8:00 AM",
-    avatar: "🏃", avatarBg: "#ea580c",
-    ai: "keep", confidence: 91,
-    tags: ["Fitness", "Trusted", "Weekly"],
-    suggested: "Keep — Trusted sender (Strava)"
-  },
-  {
-    from: "Groupon",
-    email: "deals@groupon.com",
-    subject: "🔥 Last chance: 70% off local restaurants near you",
-    preview: "James, these deals expire at midnight! Restaurants, spas, and activities in your area at up to 70% off. Don't miss out — limited spots available.",
-    time: "8:31 AM",
-    avatar: "💸", avatarBg: "#16a34a",
-    ai: "spam", confidence: 95,
-    tags: ["Spam", "Deals", "Unsolicited"],
-    suggested: "Spam — Unsolicited promotional"
-  },
-  {
-    from: "Chase Bank",
-    email: "no.reply@chase.com",
-    subject: "Your statement is ready — account ending 4821",
-    preview: "Your December statement is now available. Log in to view your balance, transactions, and minimum payment due. Payment due January 22.",
-    time: "9:05 AM",
-    avatar: "🏦", avatarBg: "#0369a1",
-    ai: "keep", confidence: 99,
-    tags: ["Financial", "Important", "Statement"],
-    suggested: "Keep — Financial statement"
-  },
-  {
-    from: "LinkedIn",
-    email: "messages-noreply@linkedin.com",
-    subject: "James, 8 people viewed your profile this week",
-    preview: "You're getting noticed! See who's looking at your profile and find out how you compare to other professionals in your network. Your profile is performing well.",
-    time: "10:17 AM",
-    avatar: "💼", avatarBg: "#0077b5",
-    ai: "unsub", confidence: 74,
-    tags: ["Social", "Marketing", "Weekly Digest"],
-    suggested: "Unsubscribe — Low-value digest"
-  },
-  {
-    from: "REI Co-op",
-    email: "rei@email.rei.com",
-    subject: "Flash Sale ⚡ 30% off hiking gear — 24 hrs only",
-    preview: "Members get early access! Shop our biggest sale of the season: trail shoes, trekking poles, rain jackets, and more. Sale ends tomorrow at midnight.",
-    time: "11:44 AM",
-    avatar: "🏔️", avatarBg: "#166534",
-    ai: "unsub", confidence: 78,
-    tags: ["Retail", "Sale", "Newsletter"],
-    suggested: "Unsubscribe — Promotional"
-  },
-  {
-    from: "Verizon",
-    email: "VZWMail@ecrm.verizonwireless.com",
-    subject: "Your monthly bill is ready — $134.22 due Feb 14",
-    preview: "Hi James, your February Verizon bill is now available. Amount due: $134.22 by February 14. Set up AutoPay to never miss a payment and save $10/month.",
-    time: "12:01 PM",
-    avatar: "📱", avatarBg: "#dc2626",
-    ai: "keep", confidence: 96,
-    tags: ["Utility", "Bill", "Important"],
-    suggested: "Keep — Monthly bill"
-  },
-  {
-    from: "noreply@promotions247.net",
-    email: "noreply@promotions247.net",
-    subject: "Congratulations! You've been selected for a FREE gift 🎁",
-    preview: "You have been randomly selected to receive a complimentary gift. Click below to claim your reward before it expires. Limited time offer — act now!",
-    time: "1:58 PM",
-    avatar: "⚠️", avatarBg: "#b45309",
-    ai: "spam", confidence: 99,
-    tags: ["Spam", "Phishing", "Suspicious"],
-    suggested: "Spam — Likely phishing"
-  },
-  {
-    from: "Morning Brew",
-    email: "hello@morningbrew.com",
-    subject: "☕ The big tech story everyone's talking about",
-    preview: "Good morning! Today: AI regulation hits a new milestone, markets react to Fed comments, and a startup just raised $400M to solve a problem you didn't know you had. 5-min read.",
-    time: "6:00 AM",
-    avatar: "☕", avatarBg: "#92400e",
-    ai: "review", confidence: 51,
-    tags: ["Newsletter", "Tech", "Daily"],
-    suggested: "Review — Low confidence (keep or unsub?)"
-  }
+  { from:"USPS Informed Delivery", email:"informed@email.informeddelivery.usps.com", subject:"Your Informed Delivery Daily Digest", preview:"3 pieces of mail and 2 packages are scheduled for delivery today. Tap to see images of your incoming mail.", time:"6:02 AM", avatar:"📬", avatarBg:"#1e40af", ai:"keep", confidence:97, tags:["Trusted","USPS","Delivery"] },
+  { from:"ENVE Composites", email:"no.reply@enve.com", subject:"Mick Schumacher Takes ENVE to the INDYCAR Stage 🏎️", preview:"The future of racing is here. Mick Schumacher and the ENVE team push the limits of carbon fiber technology at this weekend's INDYCAR race.", time:"7:14 AM", avatar:"🚴", avatarBg:"#7c3aed", ai:"unsub", confidence:82, tags:["Marketing","Cycling","Newsletter"] },
+  { from:"Strava", email:"no-reply@strava.com", subject:"Weekly Training Summary — you crushed it! 💪", preview:"This week: 3 activities, 47.2 miles, 2,840 ft elevation gain. You're in the top 15% of athletes in your area.", time:"8:00 AM", avatar:"🏃", avatarBg:"#ea580c", ai:"keep", confidence:91, tags:["Fitness","Trusted","Weekly"] },
+  { from:"Groupon", email:"deals@groupon.com", subject:"🔥 Last chance: 70% off local restaurants near you", preview:"James, these deals expire at midnight! Restaurants, spas, and activities in your area at up to 70% off. Don't miss out.", time:"8:31 AM", avatar:"💸", avatarBg:"#16a34a", ai:"spam", confidence:95, tags:["Spam","Deals","Unsolicited"] },
+  { from:"Chase Bank", email:"no.reply@chase.com", subject:"Your statement is ready — account ending 4821", preview:"Your December statement is now available. Log in to view your balance, transactions, and minimum payment due. Payment due January 22.", time:"9:05 AM", avatar:"🏦", avatarBg:"#0369a1", ai:"keep", confidence:99, tags:["Financial","Important","Statement"] },
+  { from:"LinkedIn", email:"messages-noreply@linkedin.com", subject:"James, 8 people viewed your profile this week", preview:"You're getting noticed! See who's looking at your profile and find out how you compare to other professionals in your network.", time:"10:17 AM", avatar:"💼", avatarBg:"#0077b5", ai:"unsub", confidence:74, tags:["Social","Marketing","Weekly Digest"] },
+  { from:"REI Co-op", email:"rei@email.rei.com", subject:"Flash Sale ⚡ 30% off hiking gear — 24 hrs only", preview:"Members get early access! Shop our biggest sale of the season: trail shoes, trekking poles, rain jackets, and more.", time:"11:44 AM", avatar:"🏔️", avatarBg:"#166534", ai:"unsub", confidence:78, tags:["Retail","Sale","Newsletter"] },
+  { from:"Verizon", email:"VZWMail@ecrm.verizonwireless.com", subject:"Your monthly bill is ready — $134.22 due Feb 14", preview:"Hi James, your February Verizon bill is now available. Amount due: $134.22 by February 14. Set up AutoPay to save $10/month.", time:"12:01 PM", avatar:"📱", avatarBg:"#dc2626", ai:"keep", confidence:96, tags:["Utility","Bill","Important"] },
+  { from:"noreply@promotions247.net", email:"noreply@promotions247.net", subject:"Congratulations! You've been selected for a FREE gift 🎁", preview:"You have been randomly selected to receive a complimentary gift. Click below to claim your reward before it expires.", time:"1:58 PM", avatar:"⚠️", avatarBg:"#b45309", ai:"spam", confidence:99, tags:["Spam","Phishing","Suspicious"] },
+  { from:"Morning Brew", email:"hello@morningbrew.com", subject:"☕ The big tech story everyone's talking about", preview:"Good morning! Today: AI regulation hits a new milestone, markets react to Fed comments, and a startup just raised $400M.", time:"6:00 AM", avatar:"☕", avatarBg:"#92400e", ai:"review", confidence:51, tags:["Newsletter","Tech","Daily"] }
+];
+
+const activityLog = [
+  { icon:'🛡', label:'Trusted', from:'Apple', subj:'Your receipt from Apple', time:'2h ago', color:'#22c55e' },
+  { icon:'🚫', label:'Auto-Spam', from:'DealScout Daily', subj:"🔥 50 deals you can't miss!", time:'3h ago', color:'#ef4444' },
+  { icon:'📧', label:'Unsubscribed', from:'TechCrunch Newsletter', subj:'This week in tech', time:'5h ago', color:'#3b82f6' },
+  { icon:'👤', label:'Personal', from:'Mike Johnson', subj:'Re: Weekend plans', time:'6h ago', color:'#a78bfa' },
+  { icon:'✅', label:'Kept Read', from:'GitHub', subj:'Pull request #42 approved', time:'7h ago', color:'#22c55e' },
+  { icon:'🔍', label:'Low Confidence', from:'NewsBlast', subj:'Your daily briefing', time:'8h ago', color:'#fbbf24' },
+  { icon:'🚫', label:'Spammed', from:'SuperSaver Deals', subj:'Unbelievable savings inside', time:'9h ago', color:'#ef4444' },
+  { icon:'📌', label:'Kept Unread', from:'ProductHunt', subj:'Top products of the week', time:'10h ago', color:'#a78bfa' },
 ];
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 let current = 0;
-const counts = { keep: 0, spam: 0, unsub: 0, kunread: 0 };
+const counts = { keep:0, spam:0, unsub:0, kunread:0, del:0 };
+const sessionActivity = []; // actions taken this session
+const undoStack = [];
+const MAX_UNDO = 5;
+let trainingMode = true;
+let countdown = 30;
+let panelTab = 'activity';
+
+// ── MEASURE LAYOUT ─────────────────────────────────────────────────────────
+function measureLayout() {
+  const tb = document.getElementById('topbar').offsetHeight;
+  const bb = document.getElementById('bottombar').offsetHeight;
+  const sb = document.getElementById('statusbar').offsetHeight;
+  document.documentElement.style.setProperty('--topbar-h', tb + 'px');
+  document.documentElement.style.setProperty('--bottom-h', (bb + sb) + 'px');
+  document.documentElement.style.setProperty('--actionbar-h', bb + 'px');
+}
 
 // ── RENDER CARDS ───────────────────────────────────────────────────────────
 function renderCards() {
@@ -459,6 +616,7 @@ function renderCards() {
     arena.appendChild(card);
   }
   updateCounter();
+  updateQueueCount();
   if (current < EMAILS.length) attachSwipe();
 }
 
@@ -469,15 +627,10 @@ function confColor(ai) {
 function makeCard(email, isActive) {
   const card = document.createElement('div');
   card.className = 'card' + (isActive ? ' active' : '');
-  card.dataset.idx = EMAILS.indexOf(email);
-
-  const confPct = email.confidence;
   const color = confColor(email.ai);
-  const badgeClass = email.ai + '-ai';
   const badgeLabel = email.ai === 'keep' ? '✓ Keep' : email.ai === 'spam' ? '✕ Spam' : email.ai === 'unsub' ? '↑ Unsubscribe' : '? Review';
-
   card.innerHTML = `
-    <div class="ai-badge ${badgeClass}"><div class="dot"></div>${badgeLabel} · AI Suggestion</div>
+    <div class="ai-badge ${email.ai}-ai"><div class="dot"></div>${badgeLabel} · AI Suggestion</div>
     <div class="sender-row">
       <div class="avatar" style="background:${email.avatarBg}">${email.avatar}</div>
       <div class="sender-info">
@@ -490,10 +643,10 @@ function makeCard(email, isActive) {
     <div class="preview">${email.preview}</div>
     <div class="conf-row">
       <div class="conf-label">AI Confidence</div>
-      <div class="conf-bar"><div class="conf-fill" style="width:${confPct}%;background:${color}"></div></div>
-      <div class="conf-pct" style="color:${color}">${confPct}%</div>
+      <div class="conf-bar"><div class="conf-fill" style="width:${email.confidence}%;background:${color}"></div></div>
+      <div class="conf-pct" style="color:${color}">${email.confidence}%</div>
     </div>
-    <div style="margin-top:12px"><div class="tags">${email.tags.map(t=>`<div class="tag">${t}</div>`).join('')}</div></div>
+    <div style="margin-top:10px"><div class="tags">${email.tags.map(t=>`<div class="tag">${t}</div>`).join('')}</div></div>
     <div class="overlay keep-ov"><div class="icon">✅</div><div>Keep Read</div></div>
     <div class="overlay spam-ov"><div class="icon">🚫</div><div>Spam</div></div>
     <div class="overlay unsub-ov"><div class="icon">📧</div><div>Unsub</div></div>
@@ -512,65 +665,45 @@ function getActiveCard() { return document.querySelector('.card.active'); }
 function attachSwipe() {
   const card = getActiveCard();
   if (!card) return;
-
-  const onStart = (x, y) => { startX = x; startY = y; curX = x; curY = y; dragging = true; card.style.transition = 'none'; };
+  const onStart = (x, y) => { startX=x; startY=y; curX=x; curY=y; dragging=true; card.style.transition='none'; };
   const onMove  = (x, y) => {
     if (!dragging) return;
-    curX = x; curY = y;
-    const dx = curX - startX, dy = curY - startY;
-    const rot = (dx / window.innerWidth) * ROT_MAX;
-    card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
-
-    // overlays
-    card.querySelectorAll('.overlay').forEach(o => o.style.opacity = 0);
-    const absDx = Math.abs(dx), absDy = Math.abs(dy);
-    if (absDy > absDx && dy < -40) {
-      card.querySelector('.unsub-ov').style.opacity = Math.min(absDy / THRESHOLD, 1);
-    } else if (absDy > absDx && dy > 40) {
-      card.querySelector('.kunread-ov').style.opacity = Math.min(absDy / THRESHOLD, 1);
-    } else if (dx > 40) {
-      card.querySelector('.keep-ov').style.opacity = Math.min(absDx / THRESHOLD, 1);
-    } else if (dx < -40) {
-      card.querySelector('.spam-ov').style.opacity = Math.min(absDx / THRESHOLD, 1);
-    }
+    curX=x; curY=y;
+    const dx=curX-startX, dy=curY-startY;
+    const rot=(dx/window.innerWidth)*ROT_MAX;
+    card.style.transform=`translate(${dx}px,${dy}px) rotate(${rot}deg)`;
+    card.querySelectorAll('.overlay').forEach(o=>o.style.opacity=0);
+    const absDx=Math.abs(dx), absDy=Math.abs(dy);
+    if (absDy>absDx && dy<-40)      card.querySelector('.unsub-ov').style.opacity   = Math.min(absDy/THRESHOLD,1);
+    else if (absDy>absDx && dy>40)  card.querySelector('.kunread-ov').style.opacity = Math.min(absDy/THRESHOLD,1);
+    else if (dx>40)                  card.querySelector('.keep-ov').style.opacity    = Math.min(absDx/THRESHOLD,1);
+    else if (dx<-40)                 card.querySelector('.spam-ov').style.opacity    = Math.min(absDx/THRESHOLD,1);
   };
   const onEnd = () => {
     if (!dragging) return;
-    dragging = false;
-    const dx = curX - startX, dy = curY - startY;
-    const absDx = Math.abs(dx), absDy = Math.abs(dy);
-
-    card.querySelectorAll('.overlay').forEach(o => o.style.opacity = 0);
-
-    if (absDy > absDx && dy < -THRESHOLD) {
-      flyCard(card, 0, -window.innerHeight, 'unsub');
-    } else if (absDy > absDx && dy > THRESHOLD) {
-      flyCard(card, 0, window.innerHeight, 'kunread');
-    } else if (dx > THRESHOLD) {
-      flyCard(card, window.innerWidth, 0, 'keep');
-    } else if (dx < -THRESHOLD) {
-      flyCard(card, -window.innerWidth, 0, 'spam');
-    } else {
-      card.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
-      card.style.transform = '';
-    }
+    dragging=false;
+    const dx=curX-startX, dy=curY-startY;
+    const absDx=Math.abs(dx), absDy=Math.abs(dy);
+    card.querySelectorAll('.overlay').forEach(o=>o.style.opacity=0);
+    if      (absDy>absDx && dy<-THRESHOLD) flyCard(card, 0, -window.innerHeight, 'unsub');
+    else if (absDy>absDx && dy>THRESHOLD)  flyCard(card, 0,  window.innerHeight, 'kunread');
+    else if (dx>THRESHOLD)                 flyCard(card,  window.innerWidth, 0, 'keep');
+    else if (dx<-THRESHOLD)                flyCard(card, -window.innerWidth, 0, 'spam');
+    else { card.style.transition='transform 0.4s cubic-bezier(0.34,1.56,0.64,1)'; card.style.transform=''; }
   };
-
-  // Touch
-  card.addEventListener('touchstart', e => { const t = e.touches[0]; onStart(t.clientX, t.clientY); }, { passive: true });
-  card.addEventListener('touchmove',  e => { const t = e.touches[0]; onMove(t.clientX, t.clientY); e.preventDefault(); }, { passive: false });
+  card.addEventListener('touchstart', e=>{const t=e.touches[0]; onStart(t.clientX,t.clientY);}, {passive:true});
+  card.addEventListener('touchmove',  e=>{const t=e.touches[0]; onMove(t.clientX,t.clientY); e.preventDefault();}, {passive:false});
   card.addEventListener('touchend',   onEnd);
-  // Mouse
-  card.addEventListener('mousedown',  e => onStart(e.clientX, e.clientY));
-  window.addEventListener('mousemove', e => { if (dragging) onMove(e.clientX, e.clientY); });
-  window.addEventListener('mouseup',   onEnd);
+  card.addEventListener('mousedown',  e=>onStart(e.clientX,e.clientY));
+  window.addEventListener('mousemove',e=>{if(dragging)onMove(e.clientX,e.clientY);});
+  window.addEventListener('mouseup',  onEnd);
 }
 
 function flyCard(card, tx, ty, action) {
-  card.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.38s';
-  const rot = tx > 0 ? 25 : tx < 0 ? -25 : 0;
-  card.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
-  card.style.opacity = '0';
+  card.style.transition='transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.38s';
+  const rot = tx>0?25:tx<0?-25:0;
+  card.style.transform=`translate(${tx}px,${ty}px) rotate(${rot}deg)`;
+  card.style.opacity='0';
   doAction(action, false);
 }
 
@@ -579,128 +712,221 @@ const toastMsgs = {
   keep:    ['✅ Kept & marked read!', '✅ Keeping it'],
   spam:    ['🚫 Marked as spam', '🚫 Spammed!'],
   unsub:   ['📧 Unsubscribing…', '📧 Unsub queued'],
-  kunread: ['📌 Kept unread', '📌 Saving for later']
+  kunread: ['📌 Kept unread', '📌 Saving for later'],
+  del:     ['🗑️ Deleted', '🗑️ Moved to trash'],
 };
 
-function doAction(action, animate = true) {
-  if (current >= EMAILS.length) return;
+const actionIcons  = { keep:'✅', spam:'🚫', unsub:'📧', kunread:'📌', del:'🗑️' };
+const actionLabels = { keep:'Kept Read', spam:'Spammed', unsub:'Unsubscribed', kunread:'Kept Unread', del:'Deleted' };
+const actionColors = { keep:'#22c55e', spam:'#ef4444', unsub:'#3b82f6', kunread:'#a78bfa', del:'#f97316', undo:'#60a5fa', info:'#60a5fa' };
 
+window.doAction = function(action, animate=true) {
+  if (action === null) {
+    current++;
+    setTimeout(()=>{ if(current>=EMAILS.length) showDone(); else renderCards(); }, 400);
+    return;
+  }
+  if (current>=EMAILS.length) return;
+
+  // Undo stack
+  undoStack.push({ action, cardIdx:current });
+  if (undoStack.length>MAX_UNDO) undoStack.shift();
+  updateUndoBtn();
+
+  // Count
   counts[action]++;
-  document.getElementById('s-' + action).textContent = counts[action];
+  const statEl = document.getElementById('s-'+action);
+  if (statEl) statEl.textContent = counts[action];
+
+  // Session activity
+  const email = EMAILS[current];
+  sessionActivity.unshift({ icon:actionIcons[action], label:actionLabels[action], from:email.from, subj:email.subject, color:actionColors[action] });
 
   const msgs = toastMsgs[action];
-  showToast(msgs[Math.floor(Math.random() * msgs.length)], action);
+  showToast(msgs[Math.floor(Math.random()*msgs.length)], action);
 
   if (animate) {
     const card = getActiveCard();
     if (card) {
-      const tx = action === 'spam' ? -window.innerWidth : action === 'keep' ? window.innerWidth : 0;
-      const ty = action === 'unsub' ? -window.innerHeight : action === 'kunread' ? window.innerHeight : 0;
-      const ov = card.querySelector('.' + action + '-ov');
-      if (ov) ov.style.opacity = 1;
+      const tx = action==='spam'?-window.innerWidth : action==='keep'?window.innerWidth : 0;
+      const ty = action==='unsub'?-window.innerHeight : action==='kunread'?window.innerHeight : action==='del'?window.innerHeight*0.6 : 0;
+      const ov = card.querySelector('.'+action+'-ov');
+      if (ov) ov.style.opacity=1;
       flyCard(card, tx, ty, null);
       return;
     }
   }
-
   current++;
-  setTimeout(() => {
-    if (current >= EMAILS.length) showDone();
-    else renderCards();
-  }, 400);
-}
-
-// called from flyCard with null action (already counted)
-const _origDoAction = doAction;
-
-// ── UTILITIES ──────────────────────────────────────────────────────────────
-function updateCounter() {
-  const el = document.getElementById('counter');
-  if (current < EMAILS.length) el.textContent = `${current + 1} of ${EMAILS.length}`;
-  else el.textContent = '';
-}
-
-function showToast(msg, action) {
-  const t = document.getElementById('toast');
-  const colors = { keep: '#22c55e', spam: '#ef4444', unsub: '#3b82f6', kunread: '#a78bfa', undo: '#60a5fa' };
-  t.style.color = colors[action] || '#f1f5f9';
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 1500);
-}
+  setTimeout(()=>{ if(current>=EMAILS.length) showDone(); else renderCards(); }, 400);
+};
 
 // ── UNDO ───────────────────────────────────────────────────────────────────
-const undoStack = []; // { action, cardIdx }
-const MAX_UNDO = 5;
-
 function updateUndoBtn() {
   const btn = document.getElementById('undo-btn');
-  btn.disabled = undoStack.length === 0;
+  btn.disabled = undoStack.length===0;
   document.getElementById('undo-badge').textContent = undoStack.length;
 }
 
 function undoAction() {
-  if (undoStack.length === 0) return;
+  if (undoStack.length===0) return;
   const { action, cardIdx } = undoStack.pop();
   counts[action]--;
-  document.getElementById('s-' + action).textContent = counts[action];
+  const statEl = document.getElementById('s-'+action);
+  if (statEl) statEl.textContent = counts[action];
+  sessionActivity.shift(); // remove most recent
   current = cardIdx;
-  // Hide done screen if showing
   document.getElementById('done-screen').style.display = 'none';
   renderCards();
   showToast('↩ Undone', 'undo');
   updateUndoBtn();
 }
 
+// ── SLIDE-UP PANEL ─────────────────────────────────────────────────────────
+function openPanel(tab) {
+  document.getElementById('backdrop').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+  switchPanelTab(tab || 'activity');
+}
+function closePanel() {
+  document.getElementById('backdrop').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+}
+function switchPanelTab(tab) {
+  panelTab = tab;
+  document.getElementById('tab-activity').classList.toggle('active', tab==='activity');
+  document.getElementById('tab-options').classList.toggle('active', tab==='options');
+  document.getElementById('activity-panel').style.display = tab==='activity' ? '' : 'none';
+  document.getElementById('options-panel').style.display  = tab==='options'  ? '' : 'none';
+  if (tab==='activity') buildActivityFeed();
+}
+
+function buildActivityFeed() {
+  const feed = document.getElementById('activity-panel');
+  feed.innerHTML = '';
+  // Session actions first
+  sessionActivity.forEach(a => {
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+    item.innerHTML = `<div class="act-icon">${a.icon}</div>
+      <div class="act-info">
+        <div class="act-name" style="color:${a.color}">${a.label} — ${a.from}</div>
+        <div class="act-subj">${a.subj}</div>
+      </div><div class="act-time">Just now</div>`;
+    feed.appendChild(item);
+  });
+  // Historical
+  activityLog.forEach(a => {
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+    item.innerHTML = `<div class="act-icon" style="color:${a.color}">${a.icon}</div>
+      <div class="act-info">
+        <div class="act-name" style="color:${a.color}">${a.label} — ${a.from}</div>
+        <div class="act-subj">${a.subj}</div>
+      </div><div class="act-time">${a.time}</div>`;
+    feed.appendChild(item);
+  });
+}
+
+// ── TRAINING MODE TOGGLE ───────────────────────────────────────────────────
+function toggleMode() {
+  trainingMode = !trainingMode;
+  const tog = document.getElementById('mode-toggle');
+  const badge = document.getElementById('mode-badge');
+  tog.classList.toggle('on', trainingMode);
+  if (trainingMode) {
+    badge.textContent = '⚙️ Training';
+    badge.className = 'mode-badge';
+  } else {
+    badge.textContent = '⚡ Auto';
+    badge.className = 'mode-badge auto';
+  }
+  showToast(trainingMode ? '⚙️ Training Mode on' : '⚡ Auto Mode on', 'info');
+}
+
+// ── QUEUE OVERLAY ──────────────────────────────────────────────────────────
+function openQueueOverlay() {
+  buildQueueOverlay();
+  document.getElementById('queue-overlay').classList.add('open');
+}
+function closeQueueOverlay() {
+  document.getElementById('queue-overlay').classList.remove('open');
+}
+function buildQueueOverlay() {
+  const list = document.getElementById('queue-overlay-list');
+  list.innerHTML = '';
+  const actedSet = new Set();
+  undoStack.forEach(u => actedSet.add(u.cardIdx)); // rough indicator — emails before current have been acted
+  EMAILS.forEach((email, i) => {
+    const acted = i < current;
+    const isCurrent = i === current;
+    const item = document.createElement('div');
+    item.className = 'q-item' + (acted ? ' acted' : '');
+    const actedAction = acted ? (sessionActivity[current - 1 - i] || null) : null;
+    const statusIcon = isCurrent ? '👆' : acted && actedAction ? actedAction.icon : acted ? '✓' : '';
+    item.innerHTML = `
+      <div class="q-avatar" style="background:${email.avatarBg}">${email.avatar}</div>
+      <div class="q-info">
+        <div class="q-from">${email.from}</div>
+        <div class="q-subj">${email.subject}</div>
+      </div>
+      <div class="q-badge ${email.ai}-ai">${email.ai==='keep'?'Keep':email.ai==='spam'?'Spam':email.ai==='unsub'?'Unsub':'Review'}</div>
+      <div class="q-status">${statusIcon}</div>
+    `;
+    list.appendChild(item);
+  });
+  const remaining = EMAILS.length - current;
+  document.getElementById('queue-overlay-title').textContent = `All Emails (${remaining} pending)`;
+}
+
+// ── UTILITIES ──────────────────────────────────────────────────────────────
+function updateCounter() {
+  const el = document.getElementById('counter');
+  if (current < EMAILS.length) el.textContent = `${current+1} of ${EMAILS.length}`;
+  else el.textContent = '';
+}
+function updateQueueCount() {
+  document.getElementById('queue-count').textContent = Math.max(0, EMAILS.length - current);
+}
+
+function showToast(msg, action) {
+  const t = document.getElementById('toast');
+  t.style.color = actionColors[action] || '#f1f5f9';
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
 function showDone() {
-  const s = document.getElementById('done-screen');
-  s.style.display = 'flex';
-  document.getElementById('done-total').textContent = EMAILS.length;
-  document.getElementById('d-keep').textContent    = counts.keep;
-  document.getElementById('d-spam').textContent    = counts.spam;
-  document.getElementById('d-unsub').textContent   = counts.unsub;
-  document.getElementById('d-kunread').textContent = counts.kunread;
+  document.getElementById('done-screen').style.display='flex';
+  document.getElementById('done-total').textContent  = EMAILS.length;
+  document.getElementById('d-keep').textContent      = counts.keep;
+  document.getElementById('d-spam').textContent      = counts.spam;
+  document.getElementById('d-unsub').textContent     = counts.unsub;
+  document.getElementById('d-kunread').textContent   = counts.kunread;
+  document.getElementById('d-del').textContent       = counts.del;
 }
 
 function restart() {
   current = 0;
-  counts.keep = counts.spam = counts.unsub = counts.kunread = 0;
-  ['keep','spam','unsub','kunread'].forEach(a => document.getElementById('s-'+a).textContent = 0);
+  Object.keys(counts).forEach(k=>{ counts[k]=0; const el=document.getElementById('s-'+k); if(el) el.textContent=0; });
   undoStack.length = 0;
+  sessionActivity.length = 0;
   updateUndoBtn();
-  document.getElementById('done-screen').style.display = 'none';
+  document.getElementById('done-screen').style.display='none';
   renderCards();
 }
 
-// ── INIT ───────────────────────────────────────────────────────────────────
-// Override doAction so flyCard's null call still advances the deck
-window.doAction = function(action, animate = true) {
-  if (action === null) { current++; setTimeout(() => { if (current >= EMAILS.length) showDone(); else renderCards(); }, 400); return; }
-  if (current >= EMAILS.length) return;
-  // Push to undo stack before acting
-  undoStack.push({ action, cardIdx: current });
-  if (undoStack.length > MAX_UNDO) undoStack.shift();
-  updateUndoBtn();
-  counts[action]++;
-  document.getElementById('s-' + action).textContent = counts[action];
-  const msgs = toastMsgs[action];
-  showToast(msgs[Math.floor(Math.random() * msgs.length)], action);
-  if (animate) {
-    const card = getActiveCard();
-    if (card) {
-      const tx = action === 'spam' ? -window.innerWidth : action === 'keep' ? window.innerWidth : 0;
-      const ty = action === 'unsub' ? -window.innerHeight : action === 'kunread' ? window.innerHeight : 0;
-      const ov = card.querySelector('.' + action + '-ov');
-      if (ov) ov.style.opacity = 1;
-      flyCard(card, tx, ty, null);
-      return;
-    }
-  }
-  current++;
-  setTimeout(() => { if (current >= EMAILS.length) showDone(); else renderCards(); }, 400);
-};
+// ── COUNTDOWN ──────────────────────────────────────────────────────────────
+setInterval(()=>{
+  countdown = countdown>0 ? countdown-1 : 30;
+  document.getElementById('countdown').textContent = countdown;
+}, 1000);
 
+// ── INIT ───────────────────────────────────────────────────────────────────
+measureLayout();
+window.addEventListener('resize', measureLayout);
+buildActivityFeed();
 renderCards();
 </script>
 </body>
